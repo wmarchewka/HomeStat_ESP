@@ -69,6 +69,8 @@ const int THERMOSTAT_HEAT_CALL_PIN = 16;
 const int THERMOSTAT_COOL_CALL_PIN = 15;
 const int THERMOSTAT_FAN_CALL_PIN = 10;
 const int WALT_TEST = 1000;
+const int WALT_TEST1 = 1000;
+
 
 //misc variables
 const char* ssid     = "WALTERMARCHEWKA";         //Router login
