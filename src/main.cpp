@@ -68,6 +68,7 @@ const int I2C_DATA_PIN = 5;
 const int THERMOSTAT_HEAT_CALL_PIN = 16;
 const int THERMOSTAT_COOL_CALL_PIN = 15;
 const int THERMOSTAT_FAN_CALL_PIN = 10;
+const int WALT_TEST = 1000;
 
 //misc variables
 const char* ssid     = "WALTERMARCHEWKA";         //Router login
@@ -146,7 +147,7 @@ Task taskMBcoilReg11        (TASK_IMMEDIATE, TASK_ONCE, NULL, NULL, false, NULL,
 
 
 void testRoutine() {
-  
+
   Serial.println("Test Routine");
 
 }
