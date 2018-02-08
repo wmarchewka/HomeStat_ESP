@@ -138,7 +138,7 @@ Task taskWrapper            (5000, TASK_FOREVER, &WrapperCallback, NULL , true);
 Task taskDoTempHumidity     (2000, TASK_FOREVER, &doTempHumidity);
 Task taskDoWifiStatus       (5000, TASK_FOREVER, &doWifiStatus);
 Task taskDoThermostatDetect (1000, TASK_FOREVER, &doThermostatDetect);
-Task taskDoIoControl        (200, TASK_FOREVER, &doIoControl);
+Task taskDoIoControl        (20, TASK_FOREVER, &doIoControl);
 Task taskDoDebugPrint       (1000, TASK_FOREVER, &doDebugPrint);
 Task taskBlink              (2000, TASK_ONCE, NULL, NULL, false, &BlinkOnEnable, &BlinkOnDisable);
 Task taskLED                (TASK_IMMEDIATE, TASK_FOREVER, NULL, NULL, false, NULL, &LEDOff);
@@ -552,6 +552,7 @@ void setup()
   //initialize display
   tft.init();
   tft.setRotation(0);
+  tft.fillScreen(TFT_BLACK);
 
   Serial.begin(115200);
   delay(4000);
@@ -782,8 +783,9 @@ void doTempHumidity()
     errorDHT = 0;
     char buf1[4];
     char buf2[4];
-    sprintf (buf1, "%03i", temperature);
-    sprintf (buf2, "%03i", humidity);
+    tft.fillScreen(TFT_BLACK);
+    sprintf (buf1, "%3i", temperature);
+    sprintf (buf2, "%3i", humidity);
     testdrawtext(20, 45, buf1, ST7735_WHITE, TFT_BLACK);
     testdrawtext(20, 75, buf2, ST7735_WHITE, TFT_BLACK);
   }
@@ -817,7 +819,7 @@ void testdrawtext(int wid, int hei, String text, uint16_t textcolor,uint16_t bac
   tft.setCursor(wid, hei);
   tft.setTextColor(textcolor, backcolor);
   tft.setTextWrap(true);
-  tft.print(realText);
+  //tft.print(realText);
   tft.setCursor(wid, hei);
   tft.print(text);
   unsigned int end = millis();
