@@ -751,8 +751,6 @@ void setup()
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(0);
-  //tft.print("ChipID:");
-  //tft.println(44444);
   Serial.println("Starting...");
 }
 
@@ -767,8 +765,7 @@ void doTempHumidity()
   //tft.fillScreen(TFT_BLACK);
   tft.setTextColor(TFT_WHITE);
   tft.setTextSize(4);
-    if (debug) Serial.println("Processing temperature and humity sensor...");
-
+  if (debug) Serial.println("Processing temperature and humity sensor...");
   humidity = dht.getHumidity();
   temperature = dht.getTemperature();
   temperature = dht.toFahrenheit(temperature);
