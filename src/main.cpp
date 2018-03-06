@@ -81,7 +81,7 @@ void LCD_Update()
   LCD_DrawText(0, 30, "Status  :" + glb_dhtStatusError, TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 40, "Time    :" + glb_TimeShort, TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 50, "Free mem:" + String(ESP.getFreeHeap()), TFT_WHITE, TFT_BLACK);
-
+  LCD_DrawText(0, 60, "IP Addr :" + glb_ipAddress, TFT_WHITE, TFT_BLACK);
   }
 //************************************************************************************
 void PrintFromFile(String filepath, bool debug)
