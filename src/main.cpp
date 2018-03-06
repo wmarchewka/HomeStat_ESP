@@ -583,13 +583,13 @@ void TimeRoutine() {
 
   timeinfo = localtime(&now);
   glb_TimeLong = ctime(&now);glb_TimeLong.trim();
-  glb_timeHour = timeinfo->tm_hour;
+  glb_timeHour = String(timeinfo->tm_hour);
   glb_timeMin = String(timeinfo->tm_min);
-  glb_timeSec = timeinfo->tm_sec;
-  glb_timeMonth = timeinfo->tm_mon;
-  glb_timeDay = timeinfo->tm_mday;
-  glb_timeYear = (timeinfo->tm_year) - 100;
-  glb_timeWeekDay = timeinfo->tm_wday;
+  glb_timeSec = String(timeinfo->tm_sec);
+  glb_timeMonth = String(timeinfo->tm_mon);
+  glb_timeDay = String(timeinfo->tm_mday);
+  glb_timeYear = String((timeinfo->tm_year) - 100);
+  glb_timeWeekDay = String(timeinfo->tm_wday);
   glb_TimeShort = String(glb_timeHour) + ":" +  String(glb_timeMin) + ":" + String(glb_timeSec);
 
   mb.Hreg(TIME_HH_MB_HREG, glb_timeHour.toInt());
