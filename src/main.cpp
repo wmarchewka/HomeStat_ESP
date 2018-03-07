@@ -77,7 +77,7 @@ void LCD_Update()
   LCD_DrawText(0, 30, "Status  :" + glb_dhtStatusError, TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 40, "Time    :" + glb_TimeShort, TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 50, "Free mem:" + String(ESP.getFreeHeap()), TFT_WHITE, TFT_BLACK);
-  LCD_DrawText(0, 60, "IP Addr :" + String(glb_ipAddress), TFT_WHITE, TFT_BLACK);
+  LCD_DrawText(0, 60, "IP Addr :" + glb_ipAddress.toString(), TFT_WHITE, TFT_BLACK);
 }
 //************************************************************************************
 void PrintFromFile(String filepath, bool debug)
@@ -1587,6 +1587,8 @@ void EEPROM_LoadSettings()
 
   Serial.println("Loading settings from EEPROM..");
 
+  int i = 0;
+
   //strcpy(glb_SSID, glb_defaultSSID);
   //strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
   //EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
@@ -1598,21 +1600,22 @@ void EEPROM_LoadSettings()
   EEPROM.get(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
   EEPROM.get(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
 
-  for(int x=0;x<glbSSID.length();x++){
-    if (!glbSSID.isAlphaNumeric()){
+  while (glb_SSID[i])
+  {
+    if (!isalpha(glb_SSID[i]))
+      strcpy(glb_SSID, glb_defaultSSID);
+      Serial.println("Using default SSID");
       break;
-    }
+    i++;
   }
-
-  if (strcmp(glb_SSID, "") == 0)
+   
+  while (glb_SSIDpassword[i])
   {
-    strcpy(glb_SSID, glb_defaultSSID);
-    Serial.println("Using default SSID");
-  }
-  if (strcmp(glb_SSIDpassword, "") == 0)
-  {
-    strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
-    Serial.println("Using default SSID password");
+    if (!isalpha(glb_SSIDpassword[i]))
+      strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
+      Serial.println("Using default PASS");
+      break;
+    i++;
   }
 
   Serial.print("SSID:");
@@ -1856,7 +1859,7 @@ void OTA_Setup()
 void Tasks_Enable_Setup()
 {
 
-  Debug.println("Enabling Tasks...");
+  Serial.println("Enabling Tasks...");
   taskModbusReadData_1.enable();
   taskDHT11Temp_2.enable();
   taskTimeRoutine_3.enable();
@@ -1879,127 +1882,127 @@ void Tasks_Enable_Setup()
 
   if (taskModbusReadData_1.isEnabled())
   {
-    Debug.println("Enabling task taskModbusReadData_1...");
+    Serial.println("Enabling task taskModbusReadData_1...");
     taskModbusReadData_1.setId(1);
   }
 
   if (taskDHT11Temp_2.isEnabled())
   {
-    Debug.println("Enabling task taskDHT11Temp_2...");
+    Serial.println("Enabling task taskDHT11Temp_2...");
     taskDHT11Temp_2.setId(2);
   }
 
   if (taskTimeRoutine_3.isEnabled())
   {
-    Debug.println("Enabling task taskTimeRoutine_3...");
+    Serial.println("Enabling task taskTimeRoutine_3...");
     taskTimeRoutine_3.setId(3);
   }
 
   if (taskLED_Error_4.isEnabled())
   {
-    Debug.println("Enabling task taskLED_Error_4...");
+    Serial.println("Enabling task taskLED_Error_4...");
     taskLED_Error_4.setId(4);
   }
 
   if (taskWifiCheckStatus_5.isEnabled())
   {
-    Debug.println("Enabling task taskWifiCheckStatus_5...");
+    Serial.println("Enabling task taskWifiCheckStatus_5...");
     taskWifiCheckStatus_5.setId(5);
   }
 
   if (taskThermostatDetect_6.isEnabled())
   {
-    Debug.println("Enabling task taskThermostatDetect_6...");
+    Serial.println("Enabling task taskThermostatDetect_6...");
     taskThermostatDetect_6.setId(6);
   }
 
   if (taskIoControlPins_7.isEnabled())
   {
-    Debug.println("Enabling task taskIoControlPins_7...");
+    Serial.println("Enabling task taskIoControlPins_7...");
     taskIoControlPins_7.setId(7);
   }
 
   if (taskTelnet_8.isEnabled())
   {
-    Debug.println("Enabling task taskTelnet_8...");
+    Serial.println("Enabling task taskTelnet_8...");
     taskTelnet_8.setId(8);
   }
 
   if (taskLED_onEnable_9.isEnabled())
   {
-    Debug.println("Enabling task taskLED_onEnable_9...");
+    Serial.println("Enabling task taskLED_onEnable_9...");
     taskLED_onEnable_9.setId(9);
   }
 
   if (taskLED_OnDisbale_10.isEnabled())
   {
-    Debug.println("Enabling task taskLED_OnDisbale_10...");
+    Serial.println("Enabling task taskLED_OnDisbale_10...");
     taskLED_OnDisbale_10.setId(10);
   }
 
   if (taskErrorsCodesProcess_11.isEnabled())
   {
-    Debug.println("Enabling task taskErrorsCodesProcess_11...");
+    Serial.println("Enabling task taskErrorsCodesProcess_11...");
     taskErrorsCodesProcess_11.setId(11);
   }
 
   if (taskModbusProcess_12.isEnabled())
   {
-    Debug.println("Enabling task taskModbusProcess_12...");
+    Serial.println("Enabling task taskModbusProcess_12...");
     taskModbusProcess_12.setId(12);
   }
 
   if (taskEEpromProcess_13.isEnabled())
   {
-    Debug.println("Enabling task taskEEpromProcess_13...");
+    Serial.println("Enabling task taskEEpromProcess_13...");
     taskEEpromProcess_13.setId(13);
   }
 
   if (taskMBcoilReg11_14.isEnabled())
   {
-    Debug.println("Enabling task taskMBcoilReg11_14...");
+    Serial.println("Enabling task taskMBcoilReg11_14...");
     taskMBcoilReg11_14.setId(14);
   }
 
   if (taskWebServer_Process_15.isEnabled())
   {
-    Debug.println("Enabling task taskWebServer_Process_15...");
+    Serial.println("Enabling task taskWebServer_Process_15...");
     taskWebServer_Process_15.setId(15);
   }
 
   if (taskDataServer_Process_16.isEnabled())
   {
-    Debug.println("Enabling task taskDataServer_Process_16...");
+    Serial.println("Enabling task taskDataServer_Process_16...");
     taskDataServer_Process_16.setId(16);
   }
 
   if (taskModbusClientSend_17.isEnabled())
   {
-    Debug.println("Enabling task taskModbusClientSend_17...");
+    Serial.println("Enabling task taskModbusClientSend_17...");
     taskModbusClientSend_17.setId(17);
   }
 
   if (taskOTA_Update_18.isEnabled())
   {
-    Debug.println("Enabling task taskOTA_Update_18...");
+    Serial.println("Enabling task taskOTA_Update_18...");
     taskOTA_Update_18.setId(18);
   }
 
   if (taskLogDataSave_19.isEnabled())
   {
-    Debug.println("Enabling task taskLogDataSave_19...");
+    Serial.println("Enabling task taskLogDataSave_19...");
     taskLogDataSave_19.setId(19);
   }
   if (taskLCDUpdate_20.isEnabled())
   {
-    Debug.println("Enabling task taskLCDUpdate_20...");
+    Serial.println("Enabling task taskLCDUpdate_20...");
     taskLCDUpdate_20.setId(20);
   }
 }
 //************************************************************************************
 void TaskScheduler_Setup()
 {
-  Debug.println("Adding Tasks to Scheduler...");
+  Serial.println("Adding Tasks to Scheduler...");
 
   runner.init();
   runner.addTask(taskModbusReadData_1);
@@ -2048,7 +2051,7 @@ void EEPROM_Erase()
 void Thermostat_ControlDisable()
 {
   //shutdown thermostat override
-  Debug.println("Shutting down Thermostat override and control...");
+  Serial.println("Shutting down Thermostat override and control...");
   mb.Coil(HEAT_OVERRIDE_MB_COIL, COIL_OFF); //COIL 1
   mb.Coil(HEAT_CONTROL_MB_COIL, COIL_OFF);  //COIL 2
   mb.Coil(COOL_OVERRIDE_MB_COIL, COIL_OFF); //COIL 3
@@ -2067,22 +2070,22 @@ void TimeSync_Setup()
 {
   TimeRoutine();
   glb_BootTime = glb_TimeLong;
-  Debug.print("Boot time:");
-  Debug.println(glb_BootTime);
+  Serial.print("Boot time:");
+  Serial.println(glb_BootTime);
 }
 //************************************************************************************
 void TelnetServer_Setup()
 {
-  Debug.println("Setting up Telnet Server...");
-  Debug.begin("esp195", 1);                                   // Initiaze the telnet server - HOST_NAME is the used in MDNS.begin and set the initial debug level
-  Debug.setResetCmdEnabled(true);                             // Setup after Debug.begin
+  Serial.println("Setting up Telnet Server...");
+  Debug.begin("esp195", 1);                                   // Initiaze the telnet server - HOST_NAME is the used in MDNS.begin and set the initial Serial level
+  Debug.setResetCmdEnabled(true);                             // Setup after Serial.begin
   Debug.setSerialEnabled(false);                              // All messages too send to serial too, and can be see in serial monitor
   Debug.setCallBackProjectCmds(&TelnetServer_ProcessCommand); //callback function!!!!!
 }
 //************************************************************************************
 void WebServer_Setup()
 {
-  Debug.println("HTTP server started");
+  Serial.println("HTTP server started");
 
   webServer.on("/info", WebServer_HandleText);
   webServer.on("/errorlog", WebServer_HandleErrorLog);
@@ -2101,11 +2104,11 @@ void ErrorLog_Create()
   bool debug = 1;
 
   if (debug)
-    Debug.print("Creating ErrorLog:");
+    Serial.print("Creating ErrorLog:");
 
   if (SPIFFS.begin())
   {
-    Debug.print("File system mounted:");
+    Serial.print("File system mounted:");
   }
   else
   {
@@ -2115,15 +2118,15 @@ void ErrorLog_Create()
 
   if (SPIFFS.exists(glb_errorLogPath))
   {
-    Debug.print("File exists:");
+    Serial.print("File exists:");
     File f = SPIFFS.open(glb_errorLogPath, "r");
-    Debug.print("File size is:");
-    Debug.println(f.size());
+    Serial.print("File size is:");
+    Serial.println(f.size());
     f.close();
   }
   else
   {
-    Debug.println("File not found error...");
+    Serial.println("File not found error...");
   }
 }
 //************************************************************************************
@@ -2131,8 +2134,8 @@ void Reset_Reason()
 {
 
   word numResetReason = 0;
-  Debug.print("Reset Reason:");
-  Debug.println(ESP.getResetReason());
+  Serial.print("Reset Reason:");
+  Serial.println(ESP.getResetReason());
   ErrorLogData_Save(ESP.getResetReason());
 
   if (ESP.getResetReason() == "Power on")
@@ -2163,6 +2166,6 @@ void Reset_Reason()
   mb.Hreg(ESP_RESET_COUNTER_MB_HREG, (word)glb_resetCounter);
   String tmp = "Reset counter:";
   ErrorLogData_Save(String(tmp + glb_resetCounter));
-  Debug.print("Reset counter:");
-  Debug.println(glb_resetCounter);
+  Serial.print("Reset counter:");
+  Serial.println(glb_resetCounter);
 }
