@@ -3,15 +3,13 @@
 #define _TASK_WDT_IDS
 #define _TASK_PRIORITY
 #define _TASK_STATUS_REQUEST
-
-#define HTTP_WEBSERVER_PORT         80
-#define DATASERVER_PORT             1504
-
+#define HTTP_WEBSERVER_PORT 80
+#define DATASERVER_PORT 1504
 #define DEBUG_ESP_OTA
 
-#include "TFT_eSPI.h"
 #include "ModbusIP_ESP8266.h"
 #include "Include.h"
+#include "TFT_eSPI.h"
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
@@ -34,9 +32,8 @@
 #include <ESP8266FtpServer.h>
 #include <RemoteDebug.h>
 
-//comment
 //classes
-ModbusIP mb;                                      //ModbusIP object
+ModbusIP mb; //ModbusIP object
 DHT dht;
 Adafruit_MCP23017 mcp;
 TFT_eSPI tft = TFT_eSPI();
@@ -46,43 +43,42 @@ WiFiServer DataServer(DATASERVER_PORT);
 IPAddress glb_ipAddress;
 RemoteDebug Debug;
 
-Task taskModbusReadData_1       (30, TASK_FOREVER, &Modbus_ReadData, NULL);
-Task taskDHT11Temp_2            (2000, TASK_FOREVER, &DHT11_TempHumidity, NULL);
-Task taskTimeRoutine_3          (1000, TASK_FOREVER, &TimeRoutine, NULL);
-Task taskLED_Error_4            (15000, TASK_FOREVER, &LED_Error, NULL);
-Task taskWifiCheckStatus_5      (1000, TASK_FOREVER, &Wifi_CheckStatus, NULL);
-Task taskThermostatDetect_6     (1000, TASK_FOREVER, &Thermostat_Detect, NULL);
-Task taskIoControlPins_7        (100, TASK_FOREVER, &IO_ControlPins, NULL);
-Task taskTelnet_8               (20, TASK_FOREVER, &TelnetServer_Process, NULL);
-Task taskLED_onEnable_9         (4000, TASK_ONCE, NULL, NULL, false, &LED_OnEnable, &LED_OnDisable);
-Task taskLED_OnDisbale_10       (TASK_IMMEDIATE, TASK_FOREVER, NULL, NULL, true, NULL, &LED_Off);
-Task taskErrorsCodesProcess_11  (500, TASK_FOREVER, &ErrorCodes_Process, NULL);
-Task taskModbusProcess_12       (50, TASK_FOREVER, &Modbus_Process, NULL);
-Task taskEEpromProcess_13       (1000, TASK_FOREVER, &EEPROM_Process, NULL);
-Task taskMBcoilReg11_14         (TASK_IMMEDIATE, TASK_ONCE, NULL, NULL, false, NULL, &ESP_Restart);
-Task taskWebServer_Process_15   (1000, TASK_FOREVER, &WebServer_Process, NULL);
-Task taskDataServer_Process_16  (10, TASK_FOREVER, &DataServer_Process, NULL);
-Task taskModbusClientSend_17    (5000, TASK_FOREVER, &Modbus_Client_Send, NULL);
-Task taskOTA_Update_18          (100, TASK_FOREVER, &OTA_Update, NULL);
-Task taskLogDataSave_19         (1000, TASK_FOREVER, &DataLog_Save, NULL);
-Task taskLCDUpdate_20           (1000, TASK_FOREVER, &LCD_Update, NULL);
-
+Task taskModbusReadData_1(30, TASK_FOREVER, &Modbus_ReadData, NULL);
+Task taskDHT11Temp_2(2000, TASK_FOREVER, &DHT11_TempHumidity, NULL);
+Task taskTimeRoutine_3(1000, TASK_FOREVER, &TimeRoutine, NULL);
+Task taskLED_Error_4(15000, TASK_FOREVER, &LED_Error, NULL);
+Task taskWifiCheckStatus_5(1000, TASK_FOREVER, &Wifi_CheckStatus, NULL);
+Task taskThermostatDetect_6(1000, TASK_FOREVER, &Thermostat_Detect, NULL);
+Task taskIoControlPins_7(100, TASK_FOREVER, &IO_ControlPins, NULL);
+Task taskTelnet_8(20, TASK_FOREVER, &TelnetServer_Process, NULL);
+Task taskLED_onEnable_9(4000, TASK_ONCE, NULL, NULL, false, &LED_OnEnable, &LED_OnDisable);
+Task taskLED_OnDisbale_10(TASK_IMMEDIATE, TASK_FOREVER, NULL, NULL, true, NULL, &LED_Off);
+Task taskErrorsCodesProcess_11(500, TASK_FOREVER, &ErrorCodes_Process, NULL);
+Task taskModbusProcess_12(50, TASK_FOREVER, &Modbus_Process, NULL);
+Task taskEEpromProcess_13(1000, TASK_FOREVER, &EEPROM_Process, NULL);
+Task taskMBcoilReg11_14(TASK_IMMEDIATE, TASK_ONCE, NULL, NULL, false, NULL, &ESP_Restart);
+Task taskWebServer_Process_15(1000, TASK_FOREVER, &WebServer_Process, NULL);
+Task taskDataServer_Process_16(10, TASK_FOREVER, &DataServer_Process, NULL);
+Task taskModbusClientSend_17(5000, TASK_FOREVER, &Modbus_Client_Send, NULL);
+Task taskOTA_Update_18(100, TASK_FOREVER, &OTA_Update, NULL);
+Task taskLogDataSave_19(1000, TASK_FOREVER, &DataLog_Save, NULL);
+Task taskLCDUpdate_20(1000, TASK_FOREVER, &LCD_Update, NULL);
 
 //************************************************************************************
 void LCD_Update()
 {
   tft.fillScreen(TFT_BLACK);
-  String newbuf1="Temp:"+String(glb_temperature);
-  String newbuf2="Humd:"+String(glb_humidity);
-  String newbuf3="Pkts:"+String(glb_dataServerCounter);
-  LCD_DrawText(0, 0,  "Temp    :"+ String(glb_temperature), TFT_WHITE, TFT_BLACK);
-  LCD_DrawText(0, 10, "Humidity:"+ String(glb_humidity), TFT_WHITE, TFT_BLACK);
-  LCD_DrawText(0, 20, "Pkts    :"+ String(glb_dataServerCounter), TFT_WHITE, TFT_BLACK);
+  String newbuf1 = "Temp:" + String(glb_temperature);
+  String newbuf2 = "Humd:" + String(glb_humidity);
+  String newbuf3 = "Pkts:" + String(glb_dataServerCounter);
+  LCD_DrawText(0, 0, "Temp    :" + String(glb_temperature), TFT_WHITE, TFT_BLACK);
+  LCD_DrawText(0, 10, "Humidity:" + String(glb_humidity), TFT_WHITE, TFT_BLACK);
+  LCD_DrawText(0, 20, "Pkts    :" + String(glb_dataServerCounter), TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 30, "Status  :" + glb_dhtStatusError, TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 40, "Time    :" + glb_TimeShort, TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 50, "Free mem:" + String(ESP.getFreeHeap()), TFT_WHITE, TFT_BLACK);
-  LCD_DrawText(0, 60, "IP Addr :" + glb_ipAddress, TFT_WHITE, TFT_BLACK);
-  }
+  LCD_DrawText(0, 60, "IP Addr :" + String(glb_ipAddress), TFT_WHITE, TFT_BLACK);
+}
 //************************************************************************************
 void PrintFromFile(String filepath, bool debug)
 {
@@ -90,13 +86,16 @@ void PrintFromFile(String filepath, bool debug)
   {
     //Debug.println("File exists...");
     File f = SPIFFS.open(filepath, "r");
-    while(f.available()) {
+    while (f.available())
+    {
       //Lets read line by line from the file
       String line = f.readStringUntil('\n');
-      if (debug){
+      if (debug)
+      {
         Debug.println(line);
       }
-      else{
+      else
+      {
         Debug.print(line);
       }
     }
@@ -108,56 +107,69 @@ void PrintFromFile(String filepath, bool debug)
   }
 }
 //************************************************************************************
-void TelnetServer_Process(){
+void TelnetServer_Process()
+{
   Debug.handle();
 }
 //************************************************************************************
-void TelnetServer_ProcessCommand(){
+void TelnetServer_ProcessCommand()
+{
 
   String lastCmd = Debug.getLastCommand();
 
-  if (lastCmd == "format file system") {
-  	if (Debug.isActive(Debug.ANY)) {
+  if (lastCmd == "format file system")
+  {
+    if (Debug.isActive(Debug.ANY))
+    {
       SPIFFS.format();
       Debug.print("File system formatted...");
-  	}
+    }
   }
-  else if (lastCmd == "temperature"){
+  else if (lastCmd == "temperature")
+  {
     Debug.println(glb_temperature);
   }
-  else if (lastCmd == "humidity"){
+  else if (lastCmd == "humidity")
+  {
     Debug.println(glb_humidity);
   }
-  else if (lastCmd == "light sensor"){
+  else if (lastCmd == "light sensor")
+  {
     Debug.println(glb_lightSensor);
   }
-  else if (lastCmd == "time"){
+  else if (lastCmd == "time")
+  {
     Debug.println(glb_TimeLong);
   }
-  else if (lastCmd.startsWith("hreg")) {
-    String tReg = lastCmd.substring(5,lastCmd.length());
+  else if (lastCmd.startsWith("hreg"))
+  {
+    String tReg = lastCmd.substring(5, lastCmd.length());
     int iReg = tReg.toInt();
     Debug.println(mb.Hreg(iReg));
   }
-  else if (lastCmd.startsWith("coil")) {
-    String tReg = lastCmd.substring(5,lastCmd.length());
+  else if (lastCmd.startsWith("coil"))
+  {
+    String tReg = lastCmd.substring(5, lastCmd.length());
     int iReg = tReg.toInt();
     Debug.println(mb.Coil(iReg));
   }
-  else if (lastCmd.startsWith("set coil")) {
-    String tReg = lastCmd.substring(9,lastCmd.length());
+  else if (lastCmd.startsWith("set coil"))
+  {
+    String tReg = lastCmd.substring(9, lastCmd.length());
     int iReg = tReg.toInt();
     mb.Coil(iReg, 1);
     Debug.println(mb.Coil(iReg));
   }
-  else if (lastCmd.startsWith("clr coil")) {
-    String tReg = lastCmd.substring(9,lastCmd.length());
+  else if (lastCmd.startsWith("clr coil"))
+  {
+    String tReg = lastCmd.substring(9, lastCmd.length());
     int iReg = tReg.toInt();
     mb.Coil(iReg, 0);
     Debug.println(mb.Coil(iReg));
   }
-  else if (lastCmd.startsWith("set hreg")) {
-    String tReg = lastCmd.substring(9,3);
+  else if (lastCmd.startsWith("set hreg"))
+  {
+    String tReg = lastCmd.substring(9, 3);
     int iReg = tReg.toInt();
     int firstSpace = lastCmd.indexOf(" ", 9);
     String tVal = lastCmd.substring(firstSpace + 1, lastCmd.length());
@@ -165,188 +177,263 @@ void TelnetServer_ProcessCommand(){
     mb.Hreg(iReg, iVal);
     Debug.println(mb.Hreg(iReg));
   }
-  else if (lastCmd.startsWith("task enable")) {
-    String tReg = lastCmd.substring(12,2);
+  else if (lastCmd.startsWith("task enable"))
+  {
+    String tReg = lastCmd.substring(12, 2);
     int iReg = tReg.toInt();
-    if (iReg == 1) taskModbusReadData_1.enable();
-    if (iReg == 2) taskDHT11Temp_2.enable();
-    if (iReg == 3) taskTimeRoutine_3.enable();
-    if (iReg == 4) taskLED_Error_4.enable();
-    if (iReg == 5) taskWifiCheckStatus_5.enable();
-    if (iReg == 6) taskThermostatDetect_6.enable();
-    if (iReg == 7) taskIoControlPins_7.enable();
-    if (iReg == 8) taskTelnet_8.enable();
-    if (iReg == 9) taskLED_onEnable_9.enable();
-    if (iReg == 10) taskLED_OnDisbale_10.enable();
-    if (iReg == 11) taskErrorsCodesProcess_11.enable();
-    if (iReg == 12) taskModbusProcess_12.enable();
-    if (iReg == 13) taskEEpromProcess_13.enable();
-    if (iReg == 14) taskMBcoilReg11_14.enable();
-    if (iReg == 15) taskWebServer_Process_15.enable();
-    if (iReg == 16) taskDataServer_Process_16.enable();
-    if (iReg == 17) taskModbusClientSend_17.enable();
-    if (iReg == 18) taskOTA_Update_18.enable();
-    if (iReg == 19) taskLogDataSave_19.enable();
+    if (iReg == 1)
+      taskModbusReadData_1.enable();
+    if (iReg == 2)
+      taskDHT11Temp_2.enable();
+    if (iReg == 3)
+      taskTimeRoutine_3.enable();
+    if (iReg == 4)
+      taskLED_Error_4.enable();
+    if (iReg == 5)
+      taskWifiCheckStatus_5.enable();
+    if (iReg == 6)
+      taskThermostatDetect_6.enable();
+    if (iReg == 7)
+      taskIoControlPins_7.enable();
+    if (iReg == 8)
+      taskTelnet_8.enable();
+    if (iReg == 9)
+      taskLED_onEnable_9.enable();
+    if (iReg == 10)
+      taskLED_OnDisbale_10.enable();
+    if (iReg == 11)
+      taskErrorsCodesProcess_11.enable();
+    if (iReg == 12)
+      taskModbusProcess_12.enable();
+    if (iReg == 13)
+      taskEEpromProcess_13.enable();
+    if (iReg == 14)
+      taskMBcoilReg11_14.enable();
+    if (iReg == 15)
+      taskWebServer_Process_15.enable();
+    if (iReg == 16)
+      taskDataServer_Process_16.enable();
+    if (iReg == 17)
+      taskModbusClientSend_17.enable();
+    if (iReg == 18)
+      taskOTA_Update_18.enable();
+    if (iReg == 19)
+      taskLogDataSave_19.enable();
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("task disable")) {
-    String tReg = lastCmd.substring(13,2);
+  else if (lastCmd.startsWith("task disable"))
+  {
+    String tReg = lastCmd.substring(13, 2);
     int iReg = tReg.toInt();
-    if (iReg == 1) taskModbusReadData_1.disable();
-    if (iReg == 2) taskDHT11Temp_2.disable();
-    if (iReg == 3) taskTimeRoutine_3.disable();
-    if (iReg == 4) taskLED_Error_4.disable();
-    if (iReg == 5) taskWifiCheckStatus_5.disable();
-    if (iReg == 6) taskThermostatDetect_6.disable();
-    if (iReg == 7) taskIoControlPins_7.disable();
-    if (iReg == 8) taskTelnet_8.disable();
-    if (iReg == 9) taskLED_onEnable_9.disable();
-    if (iReg == 10) taskLED_OnDisbale_10.disable();
-    if (iReg == 11) taskErrorsCodesProcess_11.disable();
-    if (iReg == 12) taskModbusProcess_12.disable();
-    if (iReg == 13) taskEEpromProcess_13.disable();
-    if (iReg == 14) taskMBcoilReg11_14.disable();
-    if (iReg == 15) taskWebServer_Process_15.disable();
-    if (iReg == 16) taskDataServer_Process_16.disable();
-    if (iReg == 17) taskModbusClientSend_17.disable();
-    if (iReg == 18) taskOTA_Update_18.disable();
-    if (iReg == 19) taskLogDataSave_19.disable();
+    if (iReg == 1)
+      taskModbusReadData_1.disable();
+    if (iReg == 2)
+      taskDHT11Temp_2.disable();
+    if (iReg == 3)
+      taskTimeRoutine_3.disable();
+    if (iReg == 4)
+      taskLED_Error_4.disable();
+    if (iReg == 5)
+      taskWifiCheckStatus_5.disable();
+    if (iReg == 6)
+      taskThermostatDetect_6.disable();
+    if (iReg == 7)
+      taskIoControlPins_7.disable();
+    if (iReg == 8)
+      taskTelnet_8.disable();
+    if (iReg == 9)
+      taskLED_onEnable_9.disable();
+    if (iReg == 10)
+      taskLED_OnDisbale_10.disable();
+    if (iReg == 11)
+      taskErrorsCodesProcess_11.disable();
+    if (iReg == 12)
+      taskModbusProcess_12.disable();
+    if (iReg == 13)
+      taskEEpromProcess_13.disable();
+    if (iReg == 14)
+      taskMBcoilReg11_14.disable();
+    if (iReg == 15)
+      taskWebServer_Process_15.disable();
+    if (iReg == 16)
+      taskDataServer_Process_16.disable();
+    if (iReg == 17)
+      taskModbusClientSend_17.disable();
+    if (iReg == 18)
+      taskOTA_Update_18.disable();
+    if (iReg == 19)
+      taskLogDataSave_19.disable();
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("wifi ssid")) {
+  else if (lastCmd.startsWith("wifi ssid"))
+  {
     Debug.println(glb_SSID);
   }
-  else if (lastCmd.startsWith("set wifi ssid")) {
+  else if (lastCmd.startsWith("set wifi ssid"))
+  {
     String tReg = lastCmd.substring(14);
     tReg.toCharArray(glb_SSID, sizeof(tReg) + 1);
     Debug.println(glb_SSID);
     EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
     EEPROM.commit();
   }
-  else if (lastCmd.startsWith("wifi pass")) {
+  else if (lastCmd.startsWith("wifi pass"))
+  {
     Debug.println(glb_SSIDpassword);
   }
-  else if (lastCmd.startsWith("set wifi pass")) {
+  else if (lastCmd.startsWith("set wifi pass"))
+  {
     String tReg = lastCmd.substring(14);
     tReg.toCharArray(glb_SSIDpassword, tReg.length() + 1);
     Debug.println(glb_SSIDpassword);
     EEPROM.put(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
     EEPROM.commit();
   }
-  else if (lastCmd.startsWith("wifi scan")) {
+  else if (lastCmd.startsWith("wifi scan"))
+  {
     int numberOfNetworks = WiFi.scanNetworks();
-    for(int i =0; i<numberOfNetworks; i++){
+    for (int i = 0; i < numberOfNetworks; i++)
+    {
       Debug.print("Network name: ");
       Debug.println(WiFi.SSID(i));
       Debug.print("Signal strength: ");
       Debug.println(WiFi.RSSI(i));
       Debug.println("-----------------------");
-     }
+    }
   }
-  else if (lastCmd.startsWith("savecrash clear")) {
+  else if (lastCmd.startsWith("savecrash clear"))
+  {
     SaveCrash.clear();
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("savecrash print")) {
+  else if (lastCmd.startsWith("savecrash print"))
+  {
     SaveCrash.print(Debug);
   }
-  else if (lastCmd.startsWith("savecrash count")) {
+  else if (lastCmd.startsWith("savecrash count"))
+  {
     Debug.println(SaveCrash.count());
   }
-  else if (lastCmd.startsWith("eeprom erase")) {
+  else if (lastCmd.startsWith("eeprom erase"))
+  {
     EEPROM_Erase();
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("reset reason")) {
+  else if (lastCmd.startsWith("reset reason"))
+  {
     Debug.println(ESP.getResetReason());
   }
-  else if (lastCmd.startsWith("free sketch size")) {
+  else if (lastCmd.startsWith("free sketch size"))
+  {
     Debug.println(ESP.getSketchSize());
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("log size")) {
+  else if (lastCmd.startsWith("log size"))
+  {
     File f = SPIFFS.open(glb_dataLogPath, "r");
     Debug.println(f.size());
     f.close();
   }
-  else if (lastCmd.startsWith("tstat status")) {
+  else if (lastCmd.startsWith("tstat status"))
+  {
     Debug.println(glb_thermostatStatus);
   }
-  else if (lastCmd.startsWith("reset count")) {
+  else if (lastCmd.startsWith("reset count"))
+  {
     glb_resetCounter = 0;
-    EEPROM.write(ES_RESETCOUNTER, glb_resetCounter ); EEPROM.commit();
+    EEPROM.write(ES_RESETCOUNTER, glb_resetCounter);
+    EEPROM.commit();
     Debug.println(glb_resetCounter);
   }
-  else if (lastCmd.startsWith("reset clear")) {
+  else if (lastCmd.startsWith("reset clear"))
+  {
     glb_resetCounter = 0;
     Debug.println(glb_resetCounter);
   }
-    else if (lastCmd.startsWith("wifi resets")) {
+  else if (lastCmd.startsWith("wifi resets"))
+  {
     Debug.println(glb_wifiNotConnectedCounter);
   }
-  else if (lastCmd.startsWith("debug serial on")) {
-    Debug.setSerialEnabled(true);   // All messages too send to serial too, and can be see in serial monitor
+  else if (lastCmd.startsWith("debug serial on"))
+  {
+    Debug.setSerialEnabled(true); // All messages too send to serial too, and can be see in serial monitor
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("debug serial off")) {
-    Debug.setSerialEnabled(false);   // All messages too send to serial too, and can be see in serial monitor
+  else if (lastCmd.startsWith("debug serial off"))
+  {
+    Debug.setSerialEnabled(false); // All messages too send to serial too, and can be see in serial monitor
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("dht debug on")) {
+  else if (lastCmd.startsWith("dht debug on"))
+  {
     glb_DHT11debugOn = true;
     Debug.println(glb_DHT11debugOn);
   }
-  else if (lastCmd.startsWith("dht debug off")) {
+  else if (lastCmd.startsWith("dht debug off"))
+  {
     glb_DHT11debugOn = false;
     Debug.println(glb_DHT11debugOn);
   }
-  else if (lastCmd.startsWith("datalog debug on")) {
+  else if (lastCmd.startsWith("datalog debug on"))
+  {
     glb_logDataDebug = true;
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("log debug off")) {
+  else if (lastCmd.startsWith("log debug off"))
+  {
     glb_logDataDebug = false;
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("datalog data on")) {
+  else if (lastCmd.startsWith("datalog data on"))
+  {
     taskLogDataSave_19.enable();
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("datalog data off")) {
+  else if (lastCmd.startsWith("datalog data off"))
+  {
     taskLogDataSave_19.disable();
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("datalog size")) {
+  else if (lastCmd.startsWith("datalog size"))
+  {
     File f = SPIFFS.open(glb_dataLogPath, "r");
     Debug.println(f.size());
     f.close();
   }
-  else if (lastCmd.startsWith("datalog delete")) {
+  else if (lastCmd.startsWith("datalog delete"))
+  {
     FileSystem_DeleteFile(glb_dataLogPath);
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("datalog print")) {
+  else if (lastCmd.startsWith("datalog print"))
+  {
     PrintFromFile(glb_dataLogPath, true);
   }
-  else if (lastCmd.startsWith("errorlog size")) {
+  else if (lastCmd.startsWith("errorlog size"))
+  {
     File f = SPIFFS.open(glb_errorLogPath, "r");
     Debug.println(f.size());
     f.close();
   }
-  else if (lastCmd.startsWith("errorlog delete")) {
+  else if (lastCmd.startsWith("errorlog delete"))
+  {
     FileSystem_DeleteFile(glb_errorLogPath);
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("errorlog print")) {
+  else if (lastCmd.startsWith("errorlog print"))
+  {
     PrintFromFile(glb_errorLogPath, true);
   }
-  else if (lastCmd.startsWith("dataserver count")) {
+  else if (lastCmd.startsWith("dataserver count"))
+  {
     Debug.println(glb_dataServerCounter);
   }
-  else if (lastCmd.startsWith("boot time")) {
+  else if (lastCmd.startsWith("boot time"))
+  {
     Debug.println(glb_BootTime);
   }
-  else if (lastCmd.startsWith("list")) {
+  else if (lastCmd.startsWith("list"))
+  {
     Debug.println("format file system");
     Debug.println("temperature");
     Debug.println("humidity");
@@ -393,7 +480,8 @@ void TelnetServer_ProcessCommand(){
   }
 }
 //************************************************************************************
-void ErrorLogData_Save(String data) {
+void ErrorLogData_Save(String data)
+{
 
   File glb_errorLog = SPIFFS.open(glb_errorLogPath, "a");
   glb_errorLog.print(glb_TimeLong);
@@ -402,24 +490,36 @@ void ErrorLogData_Save(String data) {
   glb_errorLog.close();
 }
 //************************************************************************************
-void DataLog_Save() {
+void DataLog_Save()
+{
 
   //DEBUG_V("* This is a message of debug level VERBOSE\n");
 
-  if (glb_logDataDebug) Debug.println("Save log data");
-  if (glb_logDataDebug) Debug.print("Time:");
-  if (glb_logDataDebug) Debug.println(glb_TimeLong);
-  if (glb_logDataDebug) Debug.print("Temp:");
-  if (glb_logDataDebug) Debug.println(glb_temperature);
-  if (glb_logDataDebug) Debug.print("Humidity:");
-  if (glb_logDataDebug) Debug.println(glb_humidity);
+  if (glb_logDataDebug)
+    Debug.println("Save log data");
+  if (glb_logDataDebug)
+    Debug.print("Time:");
+  if (glb_logDataDebug)
+    Debug.println(glb_TimeLong);
+  if (glb_logDataDebug)
+    Debug.print("Temp:");
+  if (glb_logDataDebug)
+    Debug.println(glb_temperature);
+  if (glb_logDataDebug)
+    Debug.print("Humidity:");
+  if (glb_logDataDebug)
+    Debug.println(glb_humidity);
 
   File glb_temperatureLog = SPIFFS.open(glb_dataLogPath, "a");
-  if (glb_logDataDebug) Debug.println(glb_temperatureLog);
+  if (glb_logDataDebug)
+    Debug.println(glb_temperatureLog);
 
-  if (glb_temperatureLog){
-    if (glb_logDataDebug) Debug.print("Filelog size...");
-    if (glb_logDataDebug) Debug.println(glb_temperatureLog.size());
+  if (glb_temperatureLog)
+  {
+    if (glb_logDataDebug)
+      Debug.print("Filelog size...");
+    if (glb_logDataDebug)
+      Debug.println(glb_temperatureLog.size());
     glb_dataLogCount++;
     glb_temperatureLog.print(glb_dataLogCount);
     glb_temperatureLog.print(",");
@@ -462,18 +562,23 @@ void DataLog_Save() {
     glb_temperatureLog.println(mb.Coil(FAN_CONTROL_PIN));
     glb_temperatureLog.close();
   }
-  else {
-    if (glb_logDataDebug) Debug.println("File open failed...");
+  else
+  {
+    if (glb_logDataDebug)
+      Debug.println("File open failed...");
   }
 }
 //************************************************************************************
-void OTA_Update() {
+void OTA_Update()
+{
   ArduinoOTA.handle();
 }
 //************************************************************************************
-void Modbus_ReadData(){
+void Modbus_ReadData()
+{
   bool debug = 0;
-  if (debug) Debug.println("Modbus Routine");
+  if (debug)
+    Debug.println("Modbus Routine");
 
   word returnValue = 0;
   int startTimeMicros = micros();
@@ -491,48 +596,59 @@ void Modbus_ReadData(){
 
   returnValue = mb.task();
 
-  if (debug){
-    if (returnValue != 1 ) Debug.println(returnValue);
+  if (debug)
+  {
+    if (returnValue != 1)
+      Debug.println(returnValue);
   }
 
-  if (taskModbusReadData_1.getStartDelay() > 0) {
+  if (taskModbusReadData_1.getStartDelay() > 0)
+  {
     taskMbStartDelayCounter++;
-    mb.Hreg(MB_START_DELAY_COUNTER_MB_REG,  (word) taskMbStartDelayCounter);
+    mb.Hreg(MB_START_DELAY_COUNTER_MB_REG, (word)taskMbStartDelayCounter);
   }
 
-  if (taskModbusReadData_1.getOverrun() < 0) {
+  if (taskModbusReadData_1.getOverrun() < 0)
+  {
     taskMbOverrunNegCounter++;
-    mb.Hreg(MB_OVERRUN_NEG_COUNTER_MB_REG, (word) taskMbOverrunNegCounter);
+    mb.Hreg(MB_OVERRUN_NEG_COUNTER_MB_REG, (word)taskMbOverrunNegCounter);
   }
 
-  if (taskModbusReadData_1.getOverrun() > 0) {
+  if (taskModbusReadData_1.getOverrun() > 0)
+  {
     taskMbOverrunPosCounter++;
-    mb.Hreg(MB_OVERRUN_POS_COUNTER_MB_REG, (word) taskMbOverrunPosCounter);
+    mb.Hreg(MB_OVERRUN_POS_COUNTER_MB_REG, (word)taskMbOverrunPosCounter);
   }
 
-  if (returnValue == 0) {   //NO_CLIENT
+  if (returnValue == 0)
+  { //NO_CLIENT
     noClientCounter++;
-    mb.Hreg(NO_CLIENT_COUNTER_MB_REG, (word) noClientCounter);
+    mb.Hreg(NO_CLIENT_COUNTER_MB_REG, (word)noClientCounter);
   }
-  if (returnValue == 1) {   //GOOD_PACKET_COUNTER
+  if (returnValue == 1)
+  { //GOOD_PACKET_COUNTER
     goodPacketCounter++;
-    mb.Hreg(GOOD_PACKET_COUNTER_MB_REG, (word) goodPacketCounter);
+    mb.Hreg(GOOD_PACKET_COUNTER_MB_REG, (word)goodPacketCounter);
   }
-  if (returnValue == 2){     //BAD_PACKET_COUNTER
+  if (returnValue == 2)
+  { //BAD_PACKET_COUNTER
     badPacketCounter++;
-    mb.Hreg(BAD_PACKET_COUNTER_MB_REG, (word) badPacketCounter);
+    mb.Hreg(BAD_PACKET_COUNTER_MB_REG, (word)badPacketCounter);
   }
-  if (returnValue == 3){     //NOT_MODBUS_PKT
+  if (returnValue == 3)
+  { //NOT_MODBUS_PKT
     notModbusPacketCounter++;
-    mb.Hreg(NOT_MODBUS_PACKET_COUNTER_MB_REG, (word) notModbusPacketCounter);
+    mb.Hreg(NOT_MODBUS_PACKET_COUNTER_MB_REG, (word)notModbusPacketCounter);
   }
-  if (returnValue == 4){    //LARGE_FRAME
+  if (returnValue == 4)
+  { //LARGE_FRAME
     largeFrameCounter++;
-    mb.Hreg(LARGE_FRAME_COUNTER_MB_REG, (word) largeFrameCounter);
+    mb.Hreg(LARGE_FRAME_COUNTER_MB_REG, (word)largeFrameCounter);
   }
-  if (returnValue == 5){     //FAILED_WRITE
+  if (returnValue == 5)
+  { //FAILED_WRITE
     failedWriteCounter++;
-    mb.Hreg(FAILED_WRITE_COUNTER_MB_REG, (word) failedWriteCounter);
+    mb.Hreg(FAILED_WRITE_COUNTER_MB_REG, (word)failedWriteCounter);
   }
 
   endTimeMicros = micros();
@@ -540,37 +656,44 @@ void Modbus_ReadData(){
   mb.Hreg(MB_ROUTINE_TIME_MB_HREG, int((word)endTimeMicros));
 }
 //************************************************************************************
-void TimeRoutine() {
+void TimeRoutine()
+{
   bool debug = 0;
   int startTimeMicros = micros();
   int static secondsCounter = 0;
   static unsigned timeout = 1000;
   unsigned start = millis();
   bool firstRun = true;
-  struct tm * timeinfo;
+  struct tm *timeinfo;
   static time_t now;
   time_t tmpNow;
 
-  if (debug) Debug.println("Time Routine");
-  if (debug) Debug.println("Waiting for time from time sync");
+  if (debug)
+    Debug.println("Time Routine");
+  if (debug)
+    Debug.println("Waiting for time from time sync");
 
   configTime(-5 * 3600, 0, "pool.ntp.org", "time.nist.gov");
 
   secondsCounter++;
   now++;
 
-  if (secondsCounter>=300 || (firstRun)){
+  if (secondsCounter >= 300 || (firstRun))
+  {
     while (millis() - start < timeout)
     {
       tmpNow = time(nullptr);
-      if (tmpNow != 0) break;
+      if (tmpNow != 0)
+        break;
       secondsCounter = 0;
       delay(100);
     }
   }
 
-  if (tmpNow == 0) {
-    if (debug) Debug.println("No NTP update");
+  if (tmpNow == 0)
+  {
+    if (debug)
+      Debug.println("No NTP update");
     firstRun = true;
   }
   else
@@ -579,10 +702,12 @@ void TimeRoutine() {
     firstRun = false;
   }
 
-  if (debug) Debug.print(ctime(&now));
+  if (debug)
+    Debug.print(ctime(&now));
 
   timeinfo = localtime(&now);
-  glb_TimeLong = ctime(&now);glb_TimeLong.trim();
+  glb_TimeLong = ctime(&now);
+  glb_TimeLong.trim();
   glb_timeHour = String(timeinfo->tm_hour);
   glb_timeMin = String(timeinfo->tm_min);
   glb_timeSec = String(timeinfo->tm_sec);
@@ -590,7 +715,7 @@ void TimeRoutine() {
   glb_timeDay = String(timeinfo->tm_mday);
   glb_timeYear = String((timeinfo->tm_year) - 100);
   glb_timeWeekDay = String(timeinfo->tm_wday);
-  glb_TimeShort = String(glb_timeHour) + ":" +  String(glb_timeMin) + ":" + String(glb_timeSec);
+  glb_TimeShort = String(glb_timeHour) + ":" + String(glb_timeMin) + ":" + String(glb_timeSec);
 
   mb.Hreg(TIME_HH_MB_HREG, glb_timeHour.toInt());
   mb.Hreg(TIME_MM_MB_HREG, glb_timeMin.toInt());
@@ -603,7 +728,8 @@ void TimeRoutine() {
 void ESP_Restart()
 {
   bool debug = 1;
-  if (debug) Debug.println("Restarting ESP");
+  if (debug)
+    Debug.println("Restarting ESP");
   ErrorLogData_Save("Restart command received...");
   delay(0);
   ESP.restart();
@@ -612,54 +738,68 @@ void ESP_Restart()
 void Modbus_Process()
 {
   bool debug = 0;
-  if (debug) Debug.println("Processing Modbus...");
+  if (debug)
+    Debug.println("Processing Modbus...");
 
   int startTimeMicros = micros();
   int endTimeMicros = 0;
 
-  for(int x = 1 ; x <= glb_maxCoilSize - 1; x++)
+  for (int x = 1; x <= glb_maxCoilSize - 1; x++)
   {
     if (glb_eepromCoilCopy[x] != mb.Coil(x))
     {
       glb_eepromCoilCopy[x] = mb.Coil(x);
-      if (debug) Debug.print("mb coil:");
-      if (debug) Debug.print(x);
-      if (debug) Debug.print(" value:");
-      if (debug) Debug.print(mb.Coil(x));
-      if (debug) Debug.print(" eepromcopy:");
-      if (debug) Debug.println (glb_eepromCoilCopy[x] );
-      if (debug) Debug.println (x);
+      if (debug)
+        Debug.print("mb coil:");
+      if (debug)
+        Debug.print(x);
+      if (debug)
+        Debug.print(" value:");
+      if (debug)
+        Debug.print(mb.Coil(x));
+      if (debug)
+        Debug.print(" eepromcopy:");
+      if (debug)
+        Debug.println(glb_eepromCoilCopy[x]);
+      if (debug)
+        Debug.println(x);
 
-      if (x == ESP_RESTART_MB_COIL) {
-        if (debug) Debug.println("case 11");
+      if (x == ESP_RESTART_MB_COIL)
+      {
+        if (debug)
+          Debug.println("case 11");
         //mb.Coil(ESP_RESTART_MB_COIL, COIL_OFF);
         //glb_eepromCoilCopy[ESP_RESTART_MB_COIL] = int(mb.Coil(x));
         Debug.print("Rebooting unit in 3 seconds...");
         taskMBcoilReg11_14.enableDelayed(3000);
       }
 
-      if (x == ESP_CLEAR_SAVECRASH_DATA) {
-        if (debug) Debug.println("case 12");
+      if (x == ESP_CLEAR_SAVECRASH_DATA)
+      {
+        if (debug)
+          Debug.println("case 12");
         //mb.Coil(ESP_CLEAR_SAVECRASH_DATA, COIL_OFF);
         //glb_eepromCoilCopy[ESP_RESTART_MB_COIL] = int(mb.Coil(x));
         Debug.println("Clearing SAVECRASH data...");
         SaveCrash.clear();
       }
     }
-    else {
+    else
+    {
       glb_eepromCoilCopy[x] = mb.Coil(x);
     }
   }
 
-  for(int x = 1 ; x <= glb_maxHregSize - 1; x++)
+  for (int x = 1; x <= glb_maxHregSize - 1; x++)
   {
     glb_eepromHregCopy[x] = mb.Hreg(x);
   }
 
   glb_freeHeap = ESP.getFreeHeap();
-  mb.Hreg(ESP_MEMORY_MB_HREG, (word) glb_freeHeap);
+  mb.Hreg(ESP_MEMORY_MB_HREG, (word)glb_freeHeap);
 
-  if (glb_freeHeap < glb_lowMemory){
+  if (glb_freeHeap < glb_lowMemory)
+  {
     glb_lowMemory = glb_freeHeap;
     mb.Hreg(ESP_MEMORY_LOW_POINT, (word)(glb_lowMemory));
   }
@@ -668,43 +808,61 @@ void Modbus_Process()
   mb.Hreg(PROCESS_MODBUS_TIME_MB_HREG, (word)(endTimeMicros));
 }
 //************************************************************************************
-void EEPROM_Process(){
+void EEPROM_Process()
+{
   bool debug = 0;
-  if (debug) Debug.println("Processing Updated EEPROM...");
+  if (debug)
+    Debug.println("Processing Updated EEPROM...");
 
   //check foir hreg change
-  for(int x = 1; x < glb_maxHregSize; x++)
+  for (int x = 1; x < glb_maxHregSize; x++)
   {
-    if ( mb.Hreg(x) != glb_eepromHregCopy[x] )
+    if (mb.Hreg(x) != glb_eepromHregCopy[x])
     {
-      if (debug) Debug.print("mb hreg:");
-      if (debug) Debug.print(x);
-      if (debug) Debug.print(" value:");
-      if (debug) Debug.print(mb.Hreg(x));
-      if (debug) Debug.print(" eepromcopy:");
-      if (debug) Debug.println (glb_eepromHregCopy[x] );
+      if (debug)
+        Debug.print("mb hreg:");
+      if (debug)
+        Debug.print(x);
+      if (debug)
+        Debug.print(" value:");
+      if (debug)
+        Debug.print(mb.Hreg(x));
+      if (debug)
+        Debug.print(" eepromcopy:");
+      if (debug)
+        Debug.println(glb_eepromHregCopy[x]);
       //EEPROM.write( x, int(mb.Hreg(x)) );
       glb_eepromHregCopy[x] = mb.Hreg(x);
     }
   }
 
   //check for coil change
-  for(int y = 1 ; y <= glb_maxCoilSize; y++)
+  for (int y = 1; y <= glb_maxCoilSize; y++)
   {
-    if ( bool(glb_eepromCoilCopy[y] ) != mb.Coil(y) )
+    if (bool(glb_eepromCoilCopy[y]) != mb.Coil(y))
     {
-      if (debug) Debug.print("mb coil:");
-      if (debug) Debug.print(y);
-      if (debug) Debug.print(" value:");
-      if (debug) Debug.print(mb.Coil(y));
-      if (debug) Debug.print(" eepromcopy:");
-      if (debug) Debug.println (glb_eepromCoilCopy[y] );
-      if (debug) Debug.print(" y + offset:");
-      if (debug) Debug.println (y + glb_eepromCoilOffset);
+      if (debug)
+        Debug.print("mb coil:");
+      if (debug)
+        Debug.print(y);
+      if (debug)
+        Debug.print(" value:");
+      if (debug)
+        Debug.print(mb.Coil(y));
+      if (debug)
+        Debug.print(" eepromcopy:");
+      if (debug)
+        Debug.println(glb_eepromCoilCopy[y]);
+      if (debug)
+        Debug.print(" y + offset:");
+      if (debug)
+        Debug.println(y + glb_eepromCoilOffset);
       //EEPROM.write(y + glb_eepromCoilOffset, int( mb.Coil(y) ) );
-      glb_eepromCoilCopy[y] = int( mb.Coil(y) );
-      if (debug) Debug.print(" New eepromcopy:");
-      if (debug) Debug.println(glb_eepromCoilCopy[y]);
+      glb_eepromCoilCopy[y] = int(mb.Coil(y));
+      if (debug)
+        Debug.print(" New eepromcopy:");
+      if (debug)
+        Debug.println(glb_eepromCoilCopy[y]);
     }
   }
   //EEPROM.commit();
@@ -715,39 +873,49 @@ void ErrorCodes_Process()
 {
 
   bool debug = 0;
-  if (debug) Debug.println("Processing Error Codes...");
+  if (debug)
+    Debug.println("Processing Error Codes...");
 
-  if (debug) Debug.print("DHT error code:");
-  if (debug) Debug.println(glb_errorDHT);
-  if (debug) Debug.print("Wifi error code:");
-  if (debug) Debug.println(glb_WiFiStatus);
-  if (debug) Debug.print("Thermostat error code:");
-  if (debug) Debug.println(glb_errorThermostat);
+  if (debug)
+    Debug.print("DHT error code:");
+  if (debug)
+    Debug.println(glb_errorDHT);
+  if (debug)
+    Debug.print("Wifi error code:");
+  if (debug)
+    Debug.println(glb_WiFiStatus);
+  if (debug)
+    Debug.print("Thermostat error code:");
+  if (debug)
+    Debug.println(glb_errorThermostat);
 
   if (glb_errorDHT != 0)
-    {
-      glb_BlinkErrorCode = glb_errorDHT;
-    }
+  {
+    glb_BlinkErrorCode = glb_errorDHT;
+  }
   else if (glb_errorThermostat != 0)
-    {
-      glb_BlinkErrorCode = glb_errorThermostat;
-    }
+  {
+    glb_BlinkErrorCode = glb_errorThermostat;
+  }
   else if (glb_WiFiStatus != 0)
-    {
-      if (debug) Debug.println(glb_WiFiStatus);
-      glb_BlinkErrorCode = glb_WiFiStatus;
-    }
-
+  {
+    if (debug)
+      Debug.println(glb_WiFiStatus);
+    glb_BlinkErrorCode = glb_WiFiStatus;
+  }
 
   mb.Hreg(BLINK_ERROR_CODE_MB_HREG, (word)glb_BlinkErrorCode);
-  if (debug) Debug.print("Blink Error Code:");
-  if (debug) Debug.println(glb_BlinkErrorCode);
+  if (debug)
+    Debug.print("Blink Error Code:");
+  if (debug)
+    Debug.println(glb_BlinkErrorCode);
 }
 //************************************************************************************
 void LED_Error()
 {
   bool debug = 0;
-  if (debug) Debug.println("Wrapper callback");
+  if (debug)
+    Debug.println("Wrapper callback");
   taskLED_onEnable_9.restartDelayed();
 }
 //************************************************************************************
@@ -756,14 +924,16 @@ void LED_Error()
 // the hardware (LED in this example)
 bool LED_OnEnable()
 {
-    bool debug = 0;
-    taskLED_OnDisbale_10.setInterval(200);
-    taskLED_OnDisbale_10.setCallback(&LED_On);
-    taskLED_OnDisbale_10.enable();
-    taskLED_onEnable_9.setInterval( (glb_BlinkErrorCode * 400) - 100 );
-    if (debug) Debug.print("Blink Error Code:");
-    if (debug) Debug.println(glb_BlinkErrorCode);
-    return true;  // Task should be enabled
+  bool debug = 0;
+  taskLED_OnDisbale_10.setInterval(200);
+  taskLED_OnDisbale_10.setCallback(&LED_On);
+  taskLED_OnDisbale_10.enable();
+  taskLED_onEnable_9.setInterval((glb_BlinkErrorCode * 400) - 100);
+  if (debug)
+    Debug.print("Blink Error Code:");
+  if (debug)
+    Debug.println(glb_BlinkErrorCode);
+  return true; // Task should be enabled
 }
 //************************************************************************************
 // taskLED_onEnable_9 does not really need a callback method
@@ -774,14 +944,16 @@ bool LED_OnEnable()
 void LED_OnDisable()
 {
   bool debug = 0;
-  if (debug) Debug.println("Blink on disable");
+  if (debug)
+    Debug.println("Blink on disable");
   taskLED_OnDisbale_10.disable();
 }
 //************************************************************************************
 void LED_On()
 {
   bool debug = 0;
-  if (debug) Debug.println("LED on");
+  if (debug)
+    Debug.println("LED on");
   mcp.digitalWrite(LED, HIGH);
   taskLED_OnDisbale_10.setCallback(&LED_Off);
 }
@@ -789,7 +961,8 @@ void LED_On()
 void LED_Off()
 {
   bool debug = 0;
-  if (debug) Debug.println("LED off");
+  if (debug)
+    Debug.println("LED off");
   mcp.digitalWrite(LED, LOW);
   taskLED_OnDisbale_10.setCallback(&LED_On);
 }
@@ -797,98 +970,132 @@ void LED_Off()
 void Thermostat_Detect()
 {
   bool debug = 0;
-  if (debug) Debug.println("Processing thermostat detect...");
+  if (debug)
+    Debug.println("Processing thermostat detect...");
 
   int startTimeMicros = micros();
   int endTimeMicros;
   word localval = 0;
   glb_thermostatStatus = "Thermostat no call";
 
-  mb.Hreg(THERMOSTAT_HEAT_CALL_PULSE_VALUE_MB_HREG, (word) glb_heatPulseDuration);
-  mb.Hreg(THERMOSTAT_COOL_CALL_PULSE_VALUE_MB_HREG, (word) glb_coolPulseDuration);
-  mb.Hreg(THERMOSTAT_FAN_CALL_PULSE_VALUE_MB_HREG, (word) glb_fanPulseDuration);
+  mb.Hreg(THERMOSTAT_HEAT_CALL_PULSE_VALUE_MB_HREG, (word)glb_heatPulseDuration);
+  mb.Hreg(THERMOSTAT_COOL_CALL_PULSE_VALUE_MB_HREG, (word)glb_coolPulseDuration);
+  mb.Hreg(THERMOSTAT_FAN_CALL_PULSE_VALUE_MB_HREG, (word)glb_fanPulseDuration);
 
-  if (debug) Debug.print("HP:");
-  if (debug) Debug.print(glb_heatPulseDuration);
-  if (debug) Debug.print(" CP:");
-  if (debug) Debug.print(glb_coolPulseDuration);
-  if (debug) Debug.print(" FP:");
-  if (debug) Debug.print(glb_fanPulseDuration);
+  if (debug)
+    Debug.print("HP:");
+  if (debug)
+    Debug.print(glb_heatPulseDuration);
+  if (debug)
+    Debug.print(" CP:");
+  if (debug)
+    Debug.print(glb_coolPulseDuration);
+  if (debug)
+    Debug.print(" FP:");
+  if (debug)
+    Debug.print(glb_fanPulseDuration);
 
-  if (debug) Debug.print(" HPC:");
-  if (debug) Debug.print(glb_heatPulseCounter);
-  if (debug) Debug.print(" CPC:");
-  if (debug) Debug.print(glb_coolPulseCounter);
-  if (debug) Debug.print(" FPC:");
-  if (debug) Debug.print(glb_fanPulseCounter);
-  if (debug) Debug.print(" BEC:");
-  if (debug) Debug.print(glb_BlinkErrorCode);
+  if (debug)
+    Debug.print(" HPC:");
+  if (debug)
+    Debug.print(glb_heatPulseCounter);
+  if (debug)
+    Debug.print(" CPC:");
+  if (debug)
+    Debug.print(glb_coolPulseCounter);
+  if (debug)
+    Debug.print(" FPC:");
+  if (debug)
+    Debug.print(glb_fanPulseCounter);
+  if (debug)
+    Debug.print(" BEC:");
+  if (debug)
+    Debug.print(glb_BlinkErrorCode);
 
-  if (glb_heatPulseCounter >= 30){
+  if (glb_heatPulseCounter >= 30)
+  {
     mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL, COIL_ON);
   }
-  else {
+  else
+  {
     mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL, COIL_OFF);
   }
   glb_heatPulseCounter = 0;
 
-  if (glb_coolPulseCounter >= 30) {
+  if (glb_coolPulseCounter >= 30)
+  {
     mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL, COIL_ON);
   }
-  else {
+  else
+  {
     mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL, COIL_OFF);
   }
   glb_coolPulseCounter = 0;
 
-  if (glb_fanPulseCounter >= 30) {
+  if (glb_fanPulseCounter >= 30)
+  {
     mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL, COIL_ON);
   }
-  else {
+  else
+  {
     mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL, COIL_OFF);
   }
   glb_fanPulseCounter = 0;
 
-  if (mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL)){
+  if (mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL))
+  {
     glb_thermostatStatus = "Heat call...";
     ErrorLogData_Save("Heat call...");
   }
-  if (mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL)){
+  if (mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL))
+  {
     glb_thermostatStatus = "Cool call...";
     ErrorLogData_Save("Cool call...");
   }
-  if (mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL)){
+  if (mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL))
+  {
     glb_thermostatStatus = "Cool call...";
     ErrorLogData_Save("Fan call...");
   }
 
   //check more than one call. if so then error
-  bool pulseCheck = mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL) && mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL) \
-   && mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL);
-  if (debug) Debug.print(" EC:");
-  if (debug) Debug.println(pulseCheck);
-  if (pulseCheck){
+  bool pulseCheck = mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL) && mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL) && mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL);
+  if (debug)
+    Debug.print(" EC:");
+  if (debug)
+    Debug.println(pulseCheck);
+  if (pulseCheck)
+  {
     glb_thermostatStatus = "Error";
     ErrorLogData_Save("Thermostat Error...");
     glb_errorThermostat = 9;
     localval = 1;
   }
-  if (debug) Debug.println(mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL));
-  if (debug) Debug.println(mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL));
-  if (debug) Debug.println(mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL));
-  if (pulseCheck == 1){
+  if (debug)
+    Debug.println(mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL));
+  if (debug)
+    Debug.println(mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL));
+  if (debug)
+    Debug.println(mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL));
+  if (pulseCheck == 1)
+  {
     //glb_thermostatStatus = "No error";
     glb_errorThermostat = 0;
     localval = 0;
   }
 
   mb.Hreg(THERMOSTAT_STATUS_ERR_MB_HREG, (word)localval);
-  if (debug) Debug.print("TS:");
-  if (debug) Debug.println(glb_thermostatStatus);
-  if (debug) Debug.print("T:");
+  if (debug)
+    Debug.print("TS:");
+  if (debug)
+    Debug.println(glb_thermostatStatus);
+  if (debug)
+    Debug.print("T:");
 
   endTimeMicros = micros();
   endTimeMicros = endTimeMicros - startTimeMicros;
-  if (debug) Debug.println(endTimeMicros);
+  if (debug)
+    Debug.println(endTimeMicros);
   mb.Hreg(THERM_DETECT_ROUTINE_TIME_MB_HREG, (word)(endTimeMicros));
 }
 //************************************************************************************
@@ -899,21 +1106,21 @@ void IO_ControlPins()
   counter++;
   if (counter == 20)
   {
-    if (debug) Debug.println("Processing IO control...");
+    if (debug)
+      Debug.println("Processing IO control...");
     counter = 0;
   }
   //read analog to get light sensor value
   glb_lightSensor = analogRead(A0);
-  mb.Hreg(ANALOG_SENSOR_MB_HREG, (word) glb_lightSensor);
+  mb.Hreg(ANALOG_SENSOR_MB_HREG, (word)glb_lightSensor);
 
   //do digital writes
-  mcp.digitalWrite(FAN_OVERRIDE_PIN,  (bool)(mb.Coil(FAN_OVERRIDE_MB_COIL)));
-  mcp.digitalWrite(FAN_CONTROL_PIN,   (bool)(mb.Coil(FAN_CONTROL_MB_COIL)));
+  mcp.digitalWrite(FAN_OVERRIDE_PIN, (bool)(mb.Coil(FAN_OVERRIDE_MB_COIL)));
+  mcp.digitalWrite(FAN_CONTROL_PIN, (bool)(mb.Coil(FAN_CONTROL_MB_COIL)));
   mcp.digitalWrite(HEAT_OVERRIDE_PIN, (bool)(mb.Coil(HEAT_OVERRIDE_MB_COIL)));
-  mcp.digitalWrite(HEAT_CONTROL_PIN,  (bool)(mb.Coil(HEAT_CONTROL_MB_COIL)));
+  mcp.digitalWrite(HEAT_CONTROL_PIN, (bool)(mb.Coil(HEAT_CONTROL_MB_COIL)));
   mcp.digitalWrite(COOL_OVERRIDE_PIN, (bool)(mb.Coil(COOL_OVERRIDE_MB_COIL)));
-  mcp.digitalWrite(COOL_CONTROL_PIN,  (bool)(mb.Coil(COOL_CONTROL_MB_COIL)));
-
+  mcp.digitalWrite(COOL_CONTROL_PIN, (bool)(mb.Coil(COOL_CONTROL_MB_COIL)));
 }
 //************************************************************************************
 void Wifi_CheckStatus()
@@ -922,30 +1129,41 @@ void Wifi_CheckStatus()
   static bool displayed = true;
   static word wifiNotConnected = 0;
   glb_WiFiStatus = WiFi.status();
-  if (debug) Debug.print("WiFI status:");
-  if (debug) Debug.print(glb_WiFiStatus);
-  if (debug) Debug.print(":");
-  if (debug) Debug.println(errorCodes[glb_WiFiStatus]);
-  if (debug) Debug.print("displayed:");
-  if (debug) Debug.print(displayed);
-  if (debug) Debug.print(":wifiNotConnected Counter:");
-  if (debug) Debug.println(wifiNotConnected);
+  if (debug)
+    Debug.print("WiFI status:");
+  if (debug)
+    Debug.print(glb_WiFiStatus);
+  if (debug)
+    Debug.print(":");
+  if (debug)
+    Debug.println(errorCodes[glb_WiFiStatus]);
+  if (debug)
+    Debug.print("displayed:");
+  if (debug)
+    Debug.print(displayed);
+  if (debug)
+    Debug.print(":wifiNotConnected Counter:");
+  if (debug)
+    Debug.println(wifiNotConnected);
 
   if (glb_WiFiStatus != WL_CONNECTED)
   {
     wifiNotConnected++;
     displayed = false;
-    if (debug) Debug.print("Disconnect counter:");
-    if (debug) Debug.println(wifiNotConnected);
+    if (debug)
+      Debug.print("Disconnect counter:");
+    if (debug)
+      Debug.println(wifiNotConnected);
     Debug.println("Wifi disconnected. Reconnecting...");
     if (wifiNotConnected >= 1)
     {
       Debug.println("Resetting WiFi...");
-    	WiFi.begin(glb_SSID, glb_SSIDpassword);
-      if (wifiNotConnected == 5) ErrorLogData_Save("Resetting WiFi...");
+      WiFi.begin(glb_SSID, glb_SSIDpassword);
+      if (wifiNotConnected == 5)
+        ErrorLogData_Save("Resetting WiFi...");
     }
 
-    if (wifiNotConnected  >= 20)
+    if (wifiNotConnected >= 20)
     {
       wifiNotConnected = 0;
       Debug.println("Wifi Failed to connect! Rebooting...");
@@ -955,24 +1173,28 @@ void Wifi_CheckStatus()
     }
   }
 
-  if (glb_WiFiStatus == 3){
-    if (!displayed) {
+  if (glb_WiFiStatus == 3)
+  {
+    if (!displayed)
+    {
       Debug.println("Wifi Reconnected !****************************************");
 
       displayed = true;
       wifiNotConnected = 0;
       glb_wifiNotConnectedCounter++;
-      mb.Hreg(WIFI_NOT_CONNECTED_MB_HREG, (word) glb_wifiNotConnectedCounter);
+      mb.Hreg(WIFI_NOT_CONNECTED_MB_HREG, (word)glb_wifiNotConnectedCounter);
     }
   }
 
-  if (glb_WiFiStatus == 0) glb_WiFiStatus = 10;
-  mb.Hreg(WIFI_STATUS_ERR_MB_HREG, (word) glb_WiFiStatus);
+  if (glb_WiFiStatus == 0)
+    glb_WiFiStatus = 10;
+  mb.Hreg(WIFI_STATUS_ERR_MB_HREG, (word)glb_WiFiStatus);
 }
 //************************************************************************************
 void DHT11_TempHumidity()
 {
-  if (glb_DHT11debugOn) Debug.println("Processing temperature and humity sensor...");
+  if (glb_DHT11debugOn)
+    Debug.println("Processing temperature and humity sensor...");
 
   static int err1 = 0;
   static int err2 = 0;
@@ -990,9 +1212,8 @@ void DHT11_TempHumidity()
   tmpTemperature = dht.toFahrenheit(tmpTemperature);
   tmpStatus = dht.getStatusString();
 
-
-  if (glb_DHT11debugOn) Debug.println(tmpStatus);
-
+  if (glb_DHT11debugOn)
+    Debug.println(tmpStatus);
 
   if (tmpStatus == "OK")
   {
@@ -1006,7 +1227,8 @@ void DHT11_TempHumidity()
     glb_errorDHT = 0;
   }
 
-  if (tmpStatus == "TIMEOUT"){
+  if (tmpStatus == "TIMEOUT")
+  {
     ErrorLogData_Save("DHT 11 timeout error...");
     glb_errorDHT = 7;
     err1++;
@@ -1014,7 +1236,8 @@ void DHT11_TempHumidity()
   }
   mb.Hreg(DHT_STATUS_ERR_TIMEOUT_COUNTER_MB_HREG, (word)err1);
 
-  if (tmpStatus == "ERROR"){
+  if (tmpStatus == "ERROR")
+  {
     ErrorLogData_Save("DHT 11 Checksum Error...");
     glb_errorDHT = 8;
     err2++;
@@ -1022,27 +1245,35 @@ void DHT11_TempHumidity()
   }
 
   mb.Hreg(DHT_STATUS_ERR_CHECKSUM_COUNTER_MB_HREG, (word)err2);
-  if (glb_DHT11debugOn) Debug.println(glb_dhtStatusError);
+  if (glb_DHT11debugOn)
+    Debug.println(glb_dhtStatusError);
 
   endTimeMicros = micros();
   elaspedTimeMicros = endTimeMicros - startTimeMicros;
   mb.Hreg(DHT_ROUTINE_TIME_MB_HREG, (word)(elaspedTimeMicros));
 }
 //************************************************************************************
-void LCD_DrawText(int wid, int hei, String text, uint16_t textcolor,uint16_t backcolor) {
+void LCD_DrawText(int wid, int hei, String text, uint16_t textcolor, uint16_t backcolor)
+{
 
   int startTimeMicros = micros();
   int endTimeMicros;
 
   bool debug = 0;
 
-  if (debug) Debug.print("Text color:");
-  if (debug) Debug.println(textcolor);
-  if (debug) Debug.print("Backcolor:");
-  if (debug) Debug.println(backcolor);
+  if (debug)
+    Debug.print("Text color:");
+  if (debug)
+    Debug.println(textcolor);
+  if (debug)
+    Debug.print("Backcolor:");
+  if (debug)
+    Debug.println(backcolor);
 
-  if (debug) Debug.print("Display:");
-  if (debug) Debug.println(text);
+  if (debug)
+    Debug.print("Display:");
+  if (debug)
+    Debug.println(text);
   tft.setCursor(wid, hei);
   tft.setTextColor(textcolor, backcolor);
   tft.setTextWrap(false);
@@ -1054,7 +1285,8 @@ void LCD_DrawText(int wid, int hei, String text, uint16_t textcolor,uint16_t bac
   mb.Hreg(SCREEN_TIME_MB_HREG, (word)(endTimeMicros));
 }
 //************************************************************************************
-void Interrupt_Detect_AC(){
+void Interrupt_Detect_AC()
+{
   bool debug = 0;
   static unsigned long endDetectMicros;
   unsigned long startDetectMicros = micros();
@@ -1064,7 +1296,8 @@ void Interrupt_Detect_AC(){
     glb_heatPulseCounter++;
     glb_fanPulseCounter++;
     glb_coolPulseCounter++;
-    if (debug) Debug.println(glb_heatPulseDuration);
+    if (debug)
+      Debug.println(glb_heatPulseDuration);
   }
 
   endDetectMicros = startDetectMicros;
@@ -1076,24 +1309,27 @@ void loop()
   yield();
 }
 //************************************************************************************
-int BootDevice_Detect(void) {
+int BootDevice_Detect(void)
+{
   int bootmode;
-  asm (
-    "movi %0, 0x60000200\n\t"
-    "l32i %0, %0, 0x118\n\t"
-    : "+r" (bootmode) /* Output */
-    : /* Inputs (none) */
-    : "memory" /* Clobbered */
+  asm(
+      "movi %0, 0x60000200\n\t"
+      "l32i %0, %0, 0x118\n\t"
+      : "+r"(bootmode) /* Output */
+      :                /* Inputs (none) */
+      : "memory"       /* Clobbered */
   );
   return ((bootmode >> 0x10) & 0x7);
 }
 //************************************************************************************
-void DataServer_Setup(){
+void DataServer_Setup()
+{
   Debug.println("Enabling data server...");
   DataServer.begin();
 }
 //************************************************************************************
-void DataServer_Process(){
+void DataServer_Process()
+{
 
   bool debug = 0;
   int szHreg = sizeof(glb_eepromHregCopy);
@@ -1101,21 +1337,30 @@ void DataServer_Process(){
   uint8_t rbuf[] = {};
   byte testDataMore[szCoil + szHreg + 1];
 
-  memcpy(testDataMore, glb_eepromHregCopy, szHreg );
+  memcpy(testDataMore, glb_eepromHregCopy, szHreg);
   memcpy(testDataMore + szHreg, glb_eepromCoilCopy, szCoil);
-  if (debug) Debug.println(szHreg);
-  if (debug) Debug.println(szCoil);
+  if (debug)
+    Debug.println(szHreg);
+  if (debug)
+    Debug.println(szCoil);
 
-  for (int lc=0; lc < 100; lc++){
+  for (int lc = 0; lc < 100; lc++)
+  {
     WiFiClient dataClient = DataServer.available();
-    if (dataClient){
-      if (dataClient.available()){
-        dataClient.read(rbuf,dataClient.available());
-        if (debug) Debug.println(*rbuf);
-        if (debug) Debug.print("webData Connection from: ");
-        if (debug) Debug.println(dataClient.remoteIP());
+    if (dataClient)
+    {
+      if (dataClient.available())
+      {
+        dataClient.read(rbuf, dataClient.available());
+        if (debug)
+          Debug.println(*rbuf);
+        if (debug)
+          Debug.print("webData Connection from: ");
+        if (debug)
+          Debug.println(dataClient.remoteIP());
       }
-      if (dataClient.connected()) {
+      if (dataClient.connected())
+      {
         dataClient.write(testDataMore, sizeof(testDataMore));
         glb_dataServerCounter++;
         dataClient.stop();
@@ -1126,7 +1371,8 @@ void DataServer_Process(){
   }
 }
 //************************************************************************************
-void DeepSleepMode(){
+void DeepSleepMode()
+{
   Debug.println("ESP8266 in sleep mode");
   ESP.deepSleep(10 * 1000000);
 }
@@ -1140,18 +1386,20 @@ void Modbus_Client_Send()
   modbusClient.print(glb_humidity);
 }
 //************************************************************************************
-void WebServer_Process(){
+void WebServer_Process()
+{
   webServer.handleClient();
 }
 //************************************************************************************
-void WebServer_HandleErrorLog() {
+void WebServer_HandleErrorLog()
+{
 
   if (SPIFFS.exists(glb_errorLogPath))
   {
     File f = SPIFFS.open(glb_errorLogPath, "r");
     if (f.size() > 0)
     {
-        webServer.streamFile(f,"text/plain");
+      webServer.streamFile(f, "text/plain");
     }
     else
     {
@@ -1165,13 +1413,11 @@ void WebServer_HandleErrorLog() {
 void WebServer_HandleRoot()
 {
   webServer.serveStatic("/", SPIFFS, "/index.html");
-
 }
 //************************************************************************************
 void WebServer_HandleFileDialog()
 {
   webServer.serveStatic("/", SPIFFS, "/index.html");
-
 }
 //************************************************************************************
 void WebServer_HandleDataLog()
@@ -1182,7 +1428,7 @@ void WebServer_HandleDataLog()
     Debug.println(f.size());
     if (f.size() > 0)
     {
-        webServer.streamFile(f,"text/plain");
+      webServer.streamFile(f, "text/plain");
     }
     else
     {
@@ -1195,90 +1441,110 @@ void WebServer_HandleDataLog()
   }
 }
 //************************************************************************************
-void WebServer_HandleText() {
+void WebServer_HandleText()
+{
 
-  String webData ="";
-  webData+="LightSensor=";
-  webData+=String(glb_lightSensor);
-  webData+="\n";
-  webData+="Temp&Humidity Status=";
-  webData+=String(glb_dhtStatusError);
-  webData+="\n";
-  webData+="Humidity=";
-  webData+=String(glb_humidity);
-  webData+="\n";
-  webData+="Temperature=";
-  webData+=String(glb_temperature);
+  String webData = "";
+  webData += "LightSensor=";
+  webData += String(glb_lightSensor);
+  webData += "\n";
+  webData += "Temp&Humidity Status=";
+  webData += String(glb_dhtStatusError);
+  webData += "\n";
+  webData += "Humidity=";
+  webData += String(glb_humidity);
+  webData += "\n";
+  webData += "Temperature=";
+  webData += String(glb_temperature);
   glb_ipAddress = WiFi.localIP();
-  webData+="\n";
-  webData+="WiFi Status=";
-  webData+=String(WiFi.status());
-  webData+="\n";
-  webData+="IP=";
-  webData+=String(glb_ipAddress);
-  webData+="\n";
-  webData+="Heat duration=";
-  webData+=String(glb_heatPulseDuration);
-  webData+="\n";
-  webData+=("Cool duration=");
-  webData+=String(glb_coolPulseDuration);
-  webData+="\n";
-  webData+=("Fan duration=");
-  webData+=String(glb_fanPulseDuration);
-  webData+="\n";
-  webData+=("Thermostat Status=");
-  webData+=String(glb_thermostatStatus);
-  webData+="\n";
-  webData+=("Error Code:");
-  webData+=String(glb_BlinkErrorCode);
-  webData+="\n";
-  webData+="Coils=";
-  for(int x=23; x >15;x--){webData+=String(mb.Coil(x));}
-  webData+=" ";
-  for(int x=15; x>7;x--){webData+=String(mb.Coil(x));}
-  webData+=(" ");
-  for(int x=7; x>=0;x--){webData+=String(mb.Coil(x));}
-  webData+=("\n");
-
-  webData+="PINS=";
-  for(int x=23; x >15;x--){webData+=String(digitalRead(x));}
-  webData+=" ";
-  for(int x=15; x >7;x--){webData+=String(digitalRead(x));}
-  webData+=" ";
-  for(int x=7; x>=0;x--){webData+=String(digitalRead(x));}
-  webData+="\n";
-
-  for(int x = 1 ; x <= glb_maxCoilSize - 1; x++)
+  webData += "\n";
+  webData += "WiFi Status=";
+  webData += String(WiFi.status());
+  webData += "\n";
+  webData += "IP=";
+  webData += String(glb_ipAddress);
+  webData += "\n";
+  webData += "Heat duration=";
+  webData += String(glb_heatPulseDuration);
+  webData += "\n";
+  webData += ("Cool duration=");
+  webData += String(glb_coolPulseDuration);
+  webData += "\n";
+  webData += ("Fan duration=");
+  webData += String(glb_fanPulseDuration);
+  webData += "\n";
+  webData += ("Thermostat Status=");
+  webData += String(glb_thermostatStatus);
+  webData += "\n";
+  webData += ("Error Code:");
+  webData += String(glb_BlinkErrorCode);
+  webData += "\n";
+  webData += "Coils=";
+  for (int x = 23; x > 15; x--)
   {
-    webData+="Modbus coil ";
-    webData+=String(x);
-    webData+=" value:";
+    webData += String(mb.Coil(x));
+  }
+  webData += " ";
+  for (int x = 15; x > 7; x--)
+  {
+    webData += String(mb.Coil(x));
+  }
+  webData += (" ");
+  for (int x = 7; x >= 0; x--)
+  {
+    webData += String(mb.Coil(x));
+  }
+  webData += ("\n");
+
+  webData += "PINS=";
+  for (int x = 23; x > 15; x--)
+  {
+    webData += String(digitalRead(x));
+  }
+  webData += " ";
+  for (int x = 15; x > 7; x--)
+  {
+    webData += String(digitalRead(x));
+  }
+  webData += " ";
+  for (int x = 7; x >= 0; x--)
+  {
+    webData += String(digitalRead(x));
+  }
+  webData += "\n";
+
+  for (int x = 1; x <= glb_maxCoilSize - 1; x++)
+  {
+    webData += "Modbus coil ";
+    webData += String(x);
+    webData += " value:";
     int val = mb.Coil(x);
-    webData+=String(val);
-    webData+="\t\t\t";
-    webData+="Modbus hReg ";
-    webData+=String(x);
-    webData+=" value:";
+    webData += String(val);
+    webData += "\t\t\t";
+    webData += "Modbus hReg ";
+    webData += String(x);
+    webData += " value:";
     val = mb.Hreg(x);
-    webData+=String(val);
-    webData+="\n";
+    webData += String(val);
+    webData += "\n";
   }
   webServer.send(200, "text/plain", webData);
   //webServer.send_P(200, "text/plain", glb_eepromHregCopy , sizeof(glb_eepromHregCopy));
   //SaveCrash.print();
-
 }
 //************************************************************************************
-void WebServer_HandleNotFound(){
+void WebServer_HandleNotFound()
+{
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += webServer.uri();
   message += "\nMethod: ";
-  message += (webServer.method() == HTTP_GET)?"GET":"POST";
+  message += (webServer.method() == HTTP_GET) ? "GET" : "POST";
   message += "\nArguments: ";
   message += webServer.args();
   message += "\n";
-  for (uint8_t i=0; i<webServer.args(); i++){
+  for (uint8_t i = 0; i < webServer.args(); i++)
+  {
     message += " " + webServer.argName(i) + ": " + webServer.arg(i) + "\n";
   }
   webServer.send(404, "text/plain", message);
@@ -1287,8 +1553,8 @@ void WebServer_HandleNotFound(){
 void setup()
 {
   Serial.begin(115200);
-  Debug.println();
-  Debug.println("Booting ESP8266");
+  Serial.println();
+  Serial.println("Booting ESP8266");
   ErrorLogData_Save("Booting ESP8266");
   //SaveCrash.print();
   ErrorLog_Create();
@@ -1296,7 +1562,8 @@ void setup()
   EEPROM_LoadSettings();
   Wifi_Setup();
   TimeSync_Setup();
-  TelnetServer_Setup();taskTelnet_8.enable();
+  TelnetServer_Setup();
+  taskTelnet_8.enable();
   LCD_Setup();
   Modbus_Registers_Create();
   DataLog_Create();
@@ -1315,44 +1582,54 @@ void setup()
   Debug.println("Starting...");
 }
 //************************************************************************************
-void EEPROM_LoadSettings(){
+void EEPROM_LoadSettings()
+{
 
-  Debug.println("Loading settings from EEPROM..");
+  Serial.println("Loading settings from EEPROM..");
 
   //strcpy(glb_SSID, glb_defaultSSID);
   //strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
   //EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
   //EEPROM.put(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
-  EEPROM.commit();
+  //EEPROM.commit();
 
   strcpy(glb_SSID, "");
 
   EEPROM.get(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
   EEPROM.get(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
 
-  if (strcmp(glb_SSID, "") == 0 ) {
-    strcpy(glb_SSID,  glb_defaultSSID);
-    Debug.println("Using default SSID");
-  }
-  if (strcmp(glb_SSIDpassword, "")== 0) {
-    strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
-    Debug.println("Using default SSID password");
+  for(int x=0;x<glbSSID.length();x++){
+    if (!glbSSID.isAlphaNumeric()){
+      break;
+    }
   }
 
-  Debug.print("SSID:");
-  Debug.println(glb_SSID);
-  Debug.print("SSID password:");
-  Debug.println(glb_SSIDpassword);
+  if (strcmp(glb_SSID, "") == 0)
+  {
+    strcpy(glb_SSID, glb_defaultSSID);
+    Serial.println("Using default SSID");
+  }
+  if (strcmp(glb_SSIDpassword, "") == 0)
+  {
+    strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
+    Serial.println("Using default SSID password");
+  }
+
+  Serial.print("SSID:");
+  Serial.println(glb_SSID);
+  Serial.print("SSID password:");
+  Serial.println(glb_SSIDpassword);
 }
 
 //************************************************************************************
-void Modbus_Registers_Create(){
+void Modbus_Registers_Create()
+{
   //create modbus registers and copy contents from eeprom
   Debug.print("Creating Modbus Holding Registers Max size : ");
   Debug.println(glb_maxHregSize);
   word wordTmp;
 
-  for(int x = 1; x <= glb_maxHregSize; x++)
+  for (int x = 1; x <= glb_maxHregSize; x++)
   {
     mb.addHreg(x);
     //wordTmp = EEPROM.read(x);
@@ -1364,7 +1641,7 @@ void Modbus_Registers_Create(){
   //create coil registers and copy contents from eepromCopy
   Debug.print("Creating Modbus Coil Registers Max size : ");
   Debug.println(glb_maxCoilSize);
-  for(int x = 1; x <= glb_maxCoilSize; x++)
+  for (int x = 1; x <= glb_maxCoilSize; x++)
   {
     mb.addCoil(x);
     //tmp = EEPROM.read(x);
@@ -1373,7 +1650,8 @@ void Modbus_Registers_Create(){
   }
 }
 //************************************************************************************
-void LCD_Setup(){
+void LCD_Setup()
+{
   Debug.println("Initialize display...");
   tft.init();
   tft.setRotation(0);
@@ -1382,16 +1660,19 @@ void LCD_Setup(){
   tft.setTextSize(0);
 }
 //************************************************************************************
-void StartupPrinting_Setup(){
+void StartupPrinting_Setup()
+{
 
   int getBD = BootDevice_Detect();
-  if ( getBD == 1 ) {
-      Debug.println("This sketch has just been uploaded over the UART.");
+  if (getBD == 1)
+  {
+    Debug.println("This sketch has just been uploaded over the UART.");
   }
-  if ( BootDevice_Detect() == 3 ) {
-      Debug.println("This sketch started from FLASH.");
+  if (BootDevice_Detect() == 3)
+  {
+    Debug.println("This sketch started from FLASH.");
   }
-  mb.Hreg(ESP_BOOT_DEVICE_MB_HREG, (word) getBD);
+  mb.Hreg(ESP_BOOT_DEVICE_MB_HREG, (word)getBD);
   Reset_Reason();
   Debug.print("MAC: ");
   Debug.println(WiFi.macAddress());
@@ -1417,10 +1698,10 @@ void StartupPrinting_Setup(){
   Debug.println(glb_freeHeap);
 }
 //************************************************************************************
-void Wifi_Setup(){
-  Debug.println("Trying to connect to WiFI...");
-  word wifiCounter=0;
-  //WiFi.begin(glb_SSID, glb_SSIDpassword);
+void Wifi_Setup()
+{
+  Serial.println("Trying to connect to WiFI...");
+  word wifiCounter = 0;
   mb.config(glb_SSID, glb_SSIDpassword);
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -1428,46 +1709,59 @@ void Wifi_Setup(){
     int stat = WiFi.status();
     Debug.println(errorCodes[stat]);
     wifiCounter++;
-    if (wifiCounter > 10){
+    if (wifiCounter > 10)
+    {
       Debug.println("Wifi Failed to connect!...");
       wifiCounter = 0;
       break;
     }
   }
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  glb_ipAddress = WiFi.localIP();
 }
 //************************************************************************************
-void FileSystem_DeleteFile(String pathname){
+void FileSystem_DeleteFile(String pathname)
+{
   SPIFFS.remove(pathname);
   File f = SPIFFS.open(pathname, "w");
   f.close();
-  if (pathname == glb_dataLogPath) glb_dataLogCount = 0;
+  if (pathname == glb_dataLogPath)
+    glb_dataLogCount = 0;
 }
 //************************************************************************************
-void DataLog_Create(){
+void DataLog_Create()
+{
   bool debug = 1;
 
-  if (debug) Debug.print("Creating Log File:");
+  if (debug)
+    Debug.print("Creating Log File:");
 
-  if (SPIFFS.begin()) {
+  if (SPIFFS.begin())
+  {
     Debug.print("File system mounted:");
   }
-  else{
+  else
+  {
     SPIFFS.begin();
   }
 
-  if (SPIFFS.exists(glb_dataLogPath)){
+  if (SPIFFS.exists(glb_dataLogPath))
+  {
     Debug.print("File exists:");
     File f = SPIFFS.open(glb_dataLogPath, "r");
     Debug.print("File size is:");
     Debug.println(f.size());
     f.close();
   }
-  else{
+  else
+  {
     Debug.println("File not found error...");
   }
 }
 //************************************************************************************
-void I2C_Setup(){
+void I2C_Setup()
+{
   Debug.println("Setting up I2C communication");
 
   // i2c mode
@@ -1476,12 +1770,14 @@ void I2C_Setup(){
   mcp.begin(0);
 }
 //************************************************************************************
-void EEPROM_Setup(){
+void EEPROM_Setup()
+{
   Debug.println("Initializing EEPOM");
   EEPROM.begin(glb_maxEEpromSize);
 }
 //************************************************************************************
-void IO_Pins_Setup() {
+void IO_Pins_Setup()
+{
   Debug.println("Initializing IO pins");
 
   //mcp pin io setup
@@ -1505,57 +1801,60 @@ void IO_Pins_Setup() {
   attachInterrupt(digitalPinToInterrupt(THERMOSTAT_HEAT_CALL_PIN), Interrupt_Detect_AC, RISING);
 }
 //************************************************************************************
-void DHT11_Sensor_Setup(){
-   Debug.println("Initializing DHT11 sensor...");
-   dht.setup(DHT11_DATA_PIN);
+void DHT11_Sensor_Setup()
+{
+  Debug.println("Initializing DHT11 sensor...");
+  dht.setup(DHT11_DATA_PIN);
 }
 //************************************************************************************
-void OTA_Setup(){
+void OTA_Setup()
+{
   ArduinoOTA.onStart([]() {
-   String type;
-   glb_OTA_Started = true;
-   if (ArduinoOTA.getCommand() == U_FLASH)
-     type = "sketch";
-   else // U_SPIFFS
-     type = "filesystem";
-     DataServer.stop();
-     webServer.stop();
-     mb.stop();
-     Debug.stop();
+    String type;
+    glb_OTA_Started = true;
+    if (ArduinoOTA.getCommand() == U_FLASH)
+      type = "sketch";
+    else // U_SPIFFS
+      type = "filesystem";
+    DataServer.stop();
+    webServer.stop();
+    mb.stop();
+    Debug.stop();
 
+    // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
 
-   // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-
-   Debug.println("Start updating " + type);
+    Debug.println("Start updating " + type);
   });
 
-  ArduinoOTA.onEnd([]()
-  {
+  ArduinoOTA.onEnd([]() {
     Debug.println("\nOTA Update complete");
   });
 
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
-  {
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     Debug.printf("Progress: %u%%\n", (progress / (total / 100)));
   });
 
   ArduinoOTA.onError([](ota_error_t error) {
     Debug.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Debug.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Debug.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Debug.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Debug.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Debug.println("End Failed");
+    if (error == OTA_AUTH_ERROR)
+      Debug.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR)
+      Debug.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR)
+      Debug.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR)
+      Debug.println("Receive Failed");
+    else if (error == OTA_END_ERROR)
+      Debug.println("End Failed");
   });
 
   Debug.println("Initializing OTA update routines...");
   ArduinoOTA.begin();
   Debug.println("OTA Update Ready..");
-  Debug.print("IP address: ");
-  Debug.println(WiFi.localIP());
 }
 //************************************************************************************
-void Tasks_Enable_Setup(){
+void Tasks_Enable_Setup()
+{
 
   Debug.println("Enabling Tasks...");
   taskModbusReadData_1.enable();
@@ -1698,7 +1997,8 @@ void Tasks_Enable_Setup(){
   }
 }
 //************************************************************************************
-void TaskScheduler_Setup(){
+void TaskScheduler_Setup()
+{
   Debug.println("Adding Tasks to Scheduler...");
 
   runner.init();
@@ -1722,62 +2022,66 @@ void TaskScheduler_Setup(){
   runner.addTask(taskOTA_Update_18);
   runner.addTask(taskLogDataSave_19);
   runner.addTask(taskLCDUpdate_20);
-
-  }
+}
 
 //************************************************************************************
-void ChipID_Acquire(){
+void ChipID_Acquire()
+{
   unsigned long chipID = ESP.getChipId();
   word idLowWord = chipID;
   unsigned long chipIDtmp = chipID >> 16;
-  word idHighWord = (word) (chipIDtmp);
-  mb.Hreg(ESP_CHIP_ID_HIGH_MB_HREG , idHighWord );
-  mb.Hreg(ESP_CHIP_ID_LOW_MB_HREG , idLowWord );
+  word idHighWord = (word)(chipIDtmp);
+  mb.Hreg(ESP_CHIP_ID_HIGH_MB_HREG, idHighWord);
+  mb.Hreg(ESP_CHIP_ID_LOW_MB_HREG, idLowWord);
 }
 //************************************************************************************
-void EEPROM_Erase(){
+void EEPROM_Erase()
+{
   //zero out eeprom registers
-  for(int x = 1; x <= glb_maxEEpromSize; x++)
+  for (int x = 1; x <= glb_maxEEpromSize; x++)
   {
     EEPROM.write(x, 0);
   }
   EEPROM.commit();
 }
 //************************************************************************************
-void Thermostat_ControlDisable(){
+void Thermostat_ControlDisable()
+{
   //shutdown thermostat override
   Debug.println("Shutting down Thermostat override and control...");
-  mb.Coil(HEAT_OVERRIDE_MB_COIL, COIL_OFF);     //COIL 1
-  mb.Coil(HEAT_CONTROL_MB_COIL, COIL_OFF);      //COIL 2
-  mb.Coil(COOL_OVERRIDE_MB_COIL, COIL_OFF);     //COIL 3
-  mb.Coil(COOL_CONTROL_MB_COIL, COIL_OFF);      //COIL 4
-  mb.Coil(FAN_OVERRIDE_MB_COIL, COIL_OFF);      //COIL 5
-  mb.Coil(FAN_CONTROL_MB_COIL, COIL_OFF);       //COIL 6
+  mb.Coil(HEAT_OVERRIDE_MB_COIL, COIL_OFF); //COIL 1
+  mb.Coil(HEAT_CONTROL_MB_COIL, COIL_OFF);  //COIL 2
+  mb.Coil(COOL_OVERRIDE_MB_COIL, COIL_OFF); //COIL 3
+  mb.Coil(COOL_CONTROL_MB_COIL, COIL_OFF);  //COIL 4
+  mb.Coil(FAN_OVERRIDE_MB_COIL, COIL_OFF);  //COIL 5
+  mb.Coil(FAN_CONTROL_MB_COIL, COIL_OFF);   //COIL 6
 }
 //************************************************************************************
-void Modbus_Registers_UpdateOnStart(){
+void Modbus_Registers_UpdateOnStart()
+{
   //update registers with important data
   //mb.Hreg(ESP_RESET_REASON_MB_HREG, ESP.getResetReason());
 }
 //************************************************************************************
 void TimeSync_Setup()
 {
-TimeRoutine();
-glb_BootTime = glb_TimeLong;
-Debug.print("Boot time:");
-Debug.println(glb_BootTime);
-
+  TimeRoutine();
+  glb_BootTime = glb_TimeLong;
+  Debug.print("Boot time:");
+  Debug.println(glb_BootTime);
 }
 //************************************************************************************
-void TelnetServer_Setup(){
+void TelnetServer_Setup()
+{
   Debug.println("Setting up Telnet Server...");
-  Debug.begin("esp195", 1); // Initiaze the telnet server - HOST_NAME is the used in MDNS.begin and set the initial debug level
-  Debug.setResetCmdEnabled(true);    // Setup after Debug.begin
-  Debug.setSerialEnabled(false);   // All messages too send to serial too, and can be see in serial monitor
-  Debug.setCallBackProjectCmds(&TelnetServer_ProcessCommand);  //callback function!!!!!
+  Debug.begin("esp195", 1);                                   // Initiaze the telnet server - HOST_NAME is the used in MDNS.begin and set the initial debug level
+  Debug.setResetCmdEnabled(true);                             // Setup after Debug.begin
+  Debug.setSerialEnabled(false);                              // All messages too send to serial too, and can be see in serial monitor
+  Debug.setCallBackProjectCmds(&TelnetServer_ProcessCommand); //callback function!!!!!
 }
 //************************************************************************************
-void WebServer_Setup(){
+void WebServer_Setup()
+{
   Debug.println("HTTP server started");
 
   webServer.on("/info", WebServer_HandleText);
@@ -1785,62 +2089,78 @@ void WebServer_Setup(){
   webServer.on("/datalog", WebServer_HandleDataLog);
   webServer.on("/files", WebServer_HandleFileDialog);
   webServer.on("/", WebServer_HandleRoot);
-  webServer.on("/inline", [](){
+  webServer.on("/inline", []() {
     webServer.send(200, "text/plain", "this works as well");
   });
   webServer.onNotFound(WebServer_HandleNotFound);
   webServer.begin();
 }
 //************************************************************************************
-void ErrorLog_Create(){
+void ErrorLog_Create()
+{
   bool debug = 1;
 
-  if (debug) Debug.print("Creating ErrorLog:");
+  if (debug)
+    Debug.print("Creating ErrorLog:");
 
-  if (SPIFFS.begin()) {
+  if (SPIFFS.begin())
+  {
     Debug.print("File system mounted:");
   }
-  else{
+  else
+  {
     SPIFFS.begin();
   }
   //SPIFFS.format();
 
-  if (SPIFFS.exists(glb_errorLogPath)){
+  if (SPIFFS.exists(glb_errorLogPath))
+  {
     Debug.print("File exists:");
     File f = SPIFFS.open(glb_errorLogPath, "r");
     Debug.print("File size is:");
     Debug.println(f.size());
     f.close();
   }
-  else{
+  else
+  {
     Debug.println("File not found error...");
   }
 }
 //************************************************************************************
-void Reset_Reason(){
+void Reset_Reason()
+{
 
   word numResetReason = 0;
   Debug.print("Reset Reason:");
   Debug.println(ESP.getResetReason());
   ErrorLogData_Save(ESP.getResetReason());
 
-  if (ESP.getResetReason() == "Power on") numResetReason = 0;         /* normal startup by power on */
-  if (ESP.getResetReason() == "Hardware Watchdog") numResetReason = 1;             /* hardware watch dog reset */
-  if (ESP.getResetReason() == "Exception") numResetReason = 2;       /* hardware watch dog reset */
-  if (ESP.getResetReason() == "Software Watchdog") numResetReason = 3;        /* exception reset, GPIO status won’t change */
-  if (ESP.getResetReason() == "Software/System restart") numResetReason = 4;        /* software restart ,system_restart */
-  if (ESP.getResetReason() == "Deep-Sleep Wake") numResetReason = 5;    /* wake up from deep-sleep */
-  if (ESP.getResetReason() == "External System") numResetReason = 6;         /* external system reset */
-  mb.Hreg(ESP_RESET_REASON_MB_HREG, (word) numResetReason);
+  if (ESP.getResetReason() == "Power on")
+    numResetReason = 0; /* normal startup by power on */
+  if (ESP.getResetReason() == "Hardware Watchdog")
+    numResetReason = 1; /* hardware watch dog reset */
+  if (ESP.getResetReason() == "Exception")
+    numResetReason = 2; /* hardware watch dog reset */
+  if (ESP.getResetReason() == "Software Watchdog")
+    numResetReason = 3; /* exception reset, GPIO status won’t change */
+  if (ESP.getResetReason() == "Software/System restart")
+    numResetReason = 4; /* software restart ,system_restart */
+  if (ESP.getResetReason() == "Deep-Sleep Wake")
+    numResetReason = 5; /* wake up from deep-sleep */
+  if (ESP.getResetReason() == "External System")
+    numResetReason = 6; /* external system reset */
+  mb.Hreg(ESP_RESET_REASON_MB_HREG, (word)numResetReason);
   if ((numResetReason == 6) || (numResetReason == 6))
   {
-    glb_resetCounter  = 0;
-    EEPROM.write(ES_RESETCOUNTER, glb_resetCounter); EEPROM.commit();
+    glb_resetCounter = 0;
+    EEPROM.write(ES_RESETCOUNTER, glb_resetCounter);
+    EEPROM.commit();
   }
   glb_resetCounter = EEPROM.read(ES_RESETCOUNTER);
   glb_resetCounter++;
-  EEPROM.write(ES_RESETCOUNTER, glb_resetCounter ); EEPROM.commit();
-  mb.Hreg(ESP_RESET_COUNTER_MB_HREG, (word) glb_resetCounter);
+  EEPROM.write(ES_RESETCOUNTER, glb_resetCounter);
+  EEPROM.commit();
+  mb.Hreg(ESP_RESET_COUNTER_MB_HREG, (word)glb_resetCounter);
   String tmp = "Reset counter:";
   ErrorLogData_Save(String(tmp + glb_resetCounter));
   Debug.print("Reset counter:");
