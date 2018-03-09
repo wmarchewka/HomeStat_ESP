@@ -1590,11 +1590,11 @@ void EEPROM_LoadSettings()
 
   int i = 0;
 
-  //strcpy(glb_SSID, glb_defaultSSID);
+  strcpy(glb_SSID, glb_defaultSSID);
   //strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
-  //EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
+  EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
   //EEPROM.put(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
-  //EEPROM.commit();
+  EEPROM.commit();
 
   strcpy(glb_SSID, "");
 
