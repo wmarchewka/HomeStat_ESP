@@ -492,8 +492,9 @@ void ErrorLogData_Save(String data)
 //************************************************************************************
 void DataLog_Save()
 {
-
   //DEBUG_V("* This is a message of debug level VERBOSE\n");
+
+  //currently 49 bytes per entry
 
   if (glb_logDataDebug)
     Debug.println("Save log data");
