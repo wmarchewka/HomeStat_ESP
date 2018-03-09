@@ -61,7 +61,7 @@ Task taskWebServer_Process_15(1000, TASK_FOREVER, &WebServer_Process, NULL);
 Task taskDataServer_Process_16(10, TASK_FOREVER, &DataServer_Process, NULL);
 Task taskModbusClientSend_17(5000, TASK_FOREVER, &Modbus_Client_Send, NULL);
 Task taskOTA_Update_18(100, TASK_FOREVER, &OTA_Update, NULL);
-Task taskLogDataSave_19(1000, TASK_FOREVER, &DataLog_Save, NULL);
+Task taskLogDataSave_19(60000, TASK_FOREVER, &DataLog_Save, NULL);
 Task taskLCDUpdate_20(1000, TASK_FOREVER, &LCD_Update, NULL);
 
 //************************************************************************************
@@ -1177,8 +1177,8 @@ void Wifi_CheckStatus()
   {
     if (!displayed)
     {
-      Debug.println("Wifi Reconnected !****************************************");
-
+      Serial.println("Wifi Reconnected !****************************************");
+      glb_ipAddress = WiFi.localIP();
       displayed = true;
       wifiNotConnected = 0;
       glb_wifiNotConnectedCounter++;
