@@ -1411,6 +1411,11 @@ void WebServer_HandleErrorLog()
   }
 }
 //************************************************************************************
+void WebServer_HandleDatalogUpload()
+{
+  webServer.serveStatic("/", SPIFFS, "/index.html");
+}
+//************************************************************************************
 void WebServer_HandleRoot()
 {
   webServer.serveStatic("/", SPIFFS, "/index.html");
@@ -2092,6 +2097,8 @@ void WebServer_Setup()
   webServer.on("/errorlog", WebServer_HandleErrorLog);
   webServer.on("/datalog", WebServer_HandleDataLog);
   webServer.on("/files", WebServer_HandleFileDialog);
+  webServer.on("/upload_datalog", WebServer_HandleDatalogUpload);
+
   webServer.on("/", WebServer_HandleRoot);
   webServer.on("/inline", []() {
     webServer.send(200, "text/plain", "this works as well");

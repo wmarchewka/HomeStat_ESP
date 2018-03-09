@@ -209,6 +209,8 @@ void FileSystem_DeleteFile(String);
 void LCD_Update();
 void WebServer_HandleFileDialog();
 void WebServer_Root();
+void WebServer_HandleDatalogUpload();
+
 
 
 #endif
