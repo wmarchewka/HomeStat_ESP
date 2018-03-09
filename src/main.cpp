@@ -272,7 +272,7 @@ void TelnetServer_ProcessCommand()
   else if (lastCmd.startsWith("set wifi ssid"))
   {
     String tReg = lastCmd.substring(14);
-    tReg.toCharArray(glb_SSID, sizeof(tReg) + 1);
+    tReg.toCharArray(glb_SSID, tReg.length() + 1);
     Debug.println(glb_SSID);
     EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
     EEPROM.commit();
