@@ -1108,7 +1108,7 @@ void IO_ControlPins()
   if (counter == 20)
   {
     if (debug)
-      Debug.println("Processing IO control...");
+      Serial.println("Processing IO control...");
     counter = 0;
   }
   //read analog to get light sensor value
@@ -1126,39 +1126,39 @@ void IO_ControlPins()
 //************************************************************************************
 void Wifi_CheckStatus()
 {
-  bool debug = 0;
+  bool debug = 1;
   static bool displayed = true;
   static word wifiNotConnected = 0;
   glb_WiFiStatus = WiFi.status();
   if (debug)
-    Debug.print("WiFI status:");
+    Serial.print("WiFI status:");
   if (debug)
-    Debug.print(glb_WiFiStatus);
+    Serial.print(glb_WiFiStatus);
   if (debug)
-    Debug.print(":");
+    Serial.print(":");
   if (debug)
-    Debug.println(errorCodes[glb_WiFiStatus]);
+    Serial.println(errorCodes[glb_WiFiStatus]);
   if (debug)
-    Debug.print("displayed:");
+    Serial.print("displayed:");
   if (debug)
-    Debug.print(displayed);
+    Serial.print(displayed);
   if (debug)
-    Debug.print(":wifiNotConnected Counter:");
+    Serial.print(":wifiNotConnected Counter:");
   if (debug)
-    Debug.println(wifiNotConnected);
+    Serial.println(wifiNotConnected);
 
   if (glb_WiFiStatus != WL_CONNECTED)
   {
     wifiNotConnected++;
     displayed = false;
     if (debug)
-      Debug.print("Disconnect counter:");
+      Serial.print("Disconnect counter:");
     if (debug)
-      Debug.println(wifiNotConnected);
+      Serial.println(wifiNotConnected);
     Debug.println("Wifi disconnected. Reconnecting...");
     if (wifiNotConnected >= 1)
     {
-      Debug.println("Resetting WiFi...");
+      Serial.println("Resetting WiFi...");
       WiFi.begin(glb_SSID, glb_SSIDpassword);
       if (wifiNotConnected == 5)
         ErrorLogData_Save("Resetting WiFi...");
@@ -1167,7 +1167,7 @@ void Wifi_CheckStatus()
     if (wifiNotConnected >= 20)
     {
       wifiNotConnected = 0;
-      Debug.println("Wifi Failed to connect! Rebooting...");
+      Serial.println("Wifi Failed to connect! Rebooting...");
       ErrorLogData_Save("Wifi Failed to connect! Rebooting...");
       delay(1000);
       ESP.restart();
