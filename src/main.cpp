@@ -1126,7 +1126,7 @@ void IO_ControlPins()
 //************************************************************************************
 void Wifi_CheckStatus()
 {
-  bool debug = 1;
+  bool debug = 0;
   static bool displayed = true;
   static word wifiNotConnected = 0;
   glb_WiFiStatus = WiFi.status();
@@ -1590,11 +1590,11 @@ void EEPROM_LoadSettings()
 
   int i = 0;
 
-  strcpy(glb_SSID, glb_defaultSSID);
+  //strcpy(glb_SSID, glb_defaultSSID);
   //strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
-  EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
+  //EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
   //EEPROM.put(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
-  EEPROM.commit();
+  //EEPROM.commit();
 
   strcpy(glb_SSID, "");
 
