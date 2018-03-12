@@ -4,6 +4,7 @@
 */
 
 #include "ModbusIP_ESP8266.h"
+
 WiFiServer server(MODBUSIP_PORT);
 
 //server.setTimeout(1000);
@@ -12,11 +13,26 @@ ModbusIP::ModbusIP() {
 }
 
 void ModbusIP::config(const char* ssid, const char* password) {
+	word wifiCounter = 0;
+
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(1000);
+    int stat = WiFi.status();
+    //Serial.println(errorCodes[stat]);
+    Serial.println();
+    wifiCounter++;
+    if (wifiCounter > 10)
+    {
+      Serial.println("Wifi Failed to connect!...");
+      wifiCounter = 0;
+      break;
+    }
+  }
 	server.begin();
 	server.setNoDelay(true);
-	//server.setTimeout(100000);
 }
 
 void ModbusIP::stop(){

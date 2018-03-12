@@ -34,10 +34,10 @@
 // this User_Setup file, then rebuild and upload the sketch to the board again:
 
 //#define ST7735_INITB
-#define ST7735_GREENTAB
+//#define ST7735_GREENTAB
 //#define ST7735_GREENTAB2
 //#define ST7735_GREENTAB3
-//#define ST7735_REDTAB
+#define ST7735_REDTAB
 //#define ST7735_BLACKTAB
 
 // ##################################################################################
@@ -139,8 +139,8 @@
 // #define SPI_FREQUENCY   5000000
 // #define SPI_FREQUENCY  10000000
 // #define SPI_FREQUENCY  20000000
- #define SPI_FREQUENCY  27000000 // Maximum for my ST7735. It is actually 26.67MHz = 80/3
-// #define SPI_FREQUENCY  40000000 // Maximum to use SPIFFS
+#define SPI_FREQUENCY  27000000 // Maximum for my ST7735. It is actually 26.67MHz = 80/3
+//#define SPI_FREQUENCY  40000000 // Maximum to use SPIFFS
 // #define SPI_FREQUENCY  80000000
 
 
@@ -150,7 +150,7 @@
 // run slightly faster, so leave it commented out unless you need it!
 // Transaction support is needed to work with SD library but not needed with TFT_SdFat
 
-// #define SUPPORT_TRANSACTIONS
+//#define SUPPORT_TRANSACTIONS
 
 // If this next #define is not commented out then the SPI pins used by the program FLASH
 // can be shared with the TFT, this frees up the HSPI SCK, MOSI and MISO pins.

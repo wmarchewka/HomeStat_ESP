@@ -21,6 +21,8 @@ String errorCodes[12] = {"0", "WIFI NO SSID AVAIL", "WIFI SCAN COMPLETED", "WIFI
 const int ES_SSID = 0;   //size of 32
 const int ES_SSIDPASSWORD = 32 ;   //SIZE OF 32
 const int ES_RESETCOUNTER = 65 ;   //SIZE OF 32
+const int ES_SSID_MD5 = 98;
+const int ES_SSIDPASS_MD5 = 102;
 
 
 //Modbus Registers Offsets (0-9999)
@@ -150,6 +152,8 @@ String glb_timeYear = "";
 String glb_timeWeekDay = "";
 String glb_BootTime = "";
 int glb_dataLogCount = 0;
+long glb_wifiRSSI = 0;
+int glb_TaskTimes[30];
 
 //function declarations
 void ChipID_Acquire();
@@ -210,6 +214,12 @@ void LCD_Update();
 void WebServer_HandleFileDialog();
 void WebServer_Root();
 void WebServer_HandleDatalogUpload();
+void FileSystem_ListDirectory();
+void FileSystem_CreateHTML();
+void testMcpOutputPin(int , int );
+void testEspOutputPin(int , int );
+void selftestMcp();
+
 
 
 
