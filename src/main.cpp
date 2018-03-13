@@ -90,33 +90,6 @@ void LCD_Update()
 
 }
 //************************************************************************************
-void PrintFromFile(String filepath, bool debug)
-{
-  if (SPIFFS.exists(filepath))
-  {
-    //Debug.println("File exists...");
-    File f = SPIFFS.open(filepath, "r");
-    while (f.available())
-    {
-      //Lets read line by line from the file
-      String line = f.readStringUntil('\n');
-      if (debug)
-      {
-        Debug.println(line);
-      }
-      else
-      {
-        Debug.print(line);
-      }
-    }
-    f.close();
-  }
-  else
-  {
-    Debug.println("File not found error...");
-  }
-}
-//************************************************************************************
 void TelnetServer_Process()
 {
   int startTimeMicros = micros();
@@ -468,9 +441,20 @@ void TelnetServer_ProcessCommand()
     FileSystem_DeleteFile(glb_dataLogPath);
     Debug.println("ok");
   }
-  else if (lastCmd.startsWith("datalog print"))
+  else if (lastCmd.startsWith("file print"))
   {
-    PrintFromFile(glb_dataLogPath, true);
+    String tReg = lastCmd.substring(11, lastCmd.length());
+    tReg = "/" + tReg;
+    Debug.println(tReg);
+    bool val = FileSystem_PrintFile(tReg, true);
+    if (val)
+    {
+     Debug.println("ok");
+    }
+    else
+    {
+      Debug.println("File not found...");
+    }
   }
   else if (lastCmd.startsWith("errorlog size"))
   {
@@ -482,10 +466,6 @@ void TelnetServer_ProcessCommand()
   {
     FileSystem_DeleteFile(glb_errorLogPath);
     Debug.println("ok");
-  }
-  else if (lastCmd.startsWith("errorlog print"))
-  {
-    PrintFromFile(glb_errorLogPath, true);
   }
   else if (lastCmd.startsWith("dataserver count"))
   {
@@ -522,6 +502,8 @@ void TelnetServer_ProcessCommand()
   {
     Debug.println("file format");
     Debug.println("file list");
+    Debug.println("file print xxxx.xxx");
+    Debug.println("file delete xxxxx.xxx");
     Debug.println("temperature");
     Debug.println("humidity");
     Debug.println("light sensor");
@@ -556,19 +538,16 @@ void TelnetServer_ProcessCommand()
     Debug.println("datalog data on");
     Debug.println("datalog data off");
     Debug.println("datalog delete");
-    Debug.println("datalog print");
     Debug.println("datalog size");
     Debug.println("dht debug on");
     Debug.println("dht debug off");
     Debug.println("errorlog delete");
-    Debug.println("errorlog print");
     Debug.println("errorlog size");
     Debug.println("dataserver count");
     Debug.println("boot time");
     Debug.println("set esp pin xx y");
     Debug.println("set mcp pin xx y");
     Debug.println("task times");
-    Debug.println("file delete xxxxx.xxx");
   }
 }
 //************************************************************************************
@@ -1992,6 +1971,37 @@ void FileSystem_ListDirectory()
     File f = dir.openFile("r");
     Debug.println(f.size());
   }
+}
+//************************************************************************************
+bool FileSystem_PrintFile(String filepath, bool debug)
+{
+  if (SPIFFS.exists(filepath))
+  {
+    //Debug.println("File exists...");
+    File f = SPIFFS.open(filepath, "r");
+    while (f.available())
+    {
+      //Lets read line by line from the file
+      String line = f.readStringUntil('\n');
+      //String line = f.readStringUntil('\n');
+      if (debug)
+      {
+        Serial.println(line);
+        Debug.println(line);
+      }
+      else
+      {
+        Debug.println(line);
+      }
+    }
+    f.close();
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+
 }
 //************************************************************************************
 bool FileSystem_DeleteFile(String pathname)

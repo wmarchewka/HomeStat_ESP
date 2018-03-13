@@ -209,6 +209,7 @@ void DataServer_Setup();
 void ErrorLogData_Save(String);
 void ErrorLog_Create();
 bool FileSystem_DeleteFile(String);
+bool FileSystem_PrintFile(String, bool);
 void LCD_Update();
 void WebServer_HandleFileUpload();
 void WebServer_Root();
@@ -218,8 +219,5 @@ void FileSystem_CreateHTML();
 void testMcpOutputPin(int , int );
 void testEspOutputPin(int , int );
 void selftestMcp();
-
-
-
 
 #endif
