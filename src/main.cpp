@@ -42,6 +42,7 @@ ESP8266WebServer webServer(HTTP_WEBSERVER_PORT);
 WiFiServer DataServer(DATASERVER_PORT);
 IPAddress glb_ipAddress;
 RemoteDebug Debug;
+File fsUploadFile;
 
 Task taskModbusReadData_1(30, TASK_FOREVER, &Modbus_ReadData, NULL);
 Task taskDHT11Temp_2(2000, TASK_FOREVER, &DHT11_TempHumidity, NULL);
@@ -501,6 +502,21 @@ void TelnetServer_ProcessCommand()
       Debug.println(glb_TaskTimes[i]);
     }
   }
+  else if (lastCmd.startsWith("file delete"))
+  {
+    String tReg = lastCmd.substring(12, lastCmd.length());
+    tReg = "/" + tReg;
+    Debug.println(tReg);
+    bool val = FileSystem_DeleteFile(tReg);
+    if (val)
+    {
+     Debug.println("ok");
+    }
+    else
+    {
+      Debug.println("File not found...");
+    }
+  }
   else if (lastCmd.startsWith("list"))
   {
     Debug.println("file format");
@@ -551,8 +567,7 @@ void TelnetServer_ProcessCommand()
     Debug.println("set esp pin xx y");
     Debug.println("set mcp pin xx y");
     Debug.println("task times");
-
-
+    Debug.println("file delete xxxxx.xxx");
   }
 }
 //************************************************************************************
@@ -1587,18 +1602,63 @@ void WebServer_HandleErrorLog()
 //************************************************************************************
 void WebServer_HandleDatalogUpload()
 {
-  webServer.serveStatic("/", SPIFFS, "/index.html");
+  webServer.serveStatic("/", SPIFFS, "/index.htm");
 }
 //************************************************************************************
 void WebServer_HandleRoot()
 {
-    //String s = MAIN_page;
-    webServer.send(200, "text/html", "This is a test");
+  Serial.print("here at root");
+  Serial.print("done at root");
+  //webServer.send(200, "text/html", "This is a test");
 }
 //************************************************************************************
-void WebServer_HandleFileDialog()
+void handleFileCreate() {
+  if (webServer.args() == 0) {
+    return webServer.send(500, "text/plain", "BAD ARGS");
+  }
+  String path = webServer.arg(0);
+  Serial.println("handleFileCreate: " + path);
+  if (path == "/") {
+    return webServer.send(500, "text/plain", "BAD PATH");
+  }
+  if (SPIFFS.exists(path)) {
+    return webServer.send(500, "text/plain", "FILE EXISTS");
+  }
+  File file = SPIFFS.open(path, "w");
+  if (file) {
+    file.close();
+  } else {
+    return webServer.send(500, "text/plain", "CREATE FAILED");
+  }
+  webServer.send(200, "text/plain", "");
+  path = String();
+}
+//************************************************************************************
+void WebServer_HandleFileUpload()
 {
-  webServer.serveStatic("/", SPIFFS, "/index.html");
+  if (webServer.uri() != "/upload") {
+    return;
+  }
+  HTTPUpload& upload = webServer.upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    String filename = upload.filename;
+    if (!filename.startsWith("/")) {
+      filename = "/" + filename;
+    }
+    Serial.print("handleFileUpload Name: "); Serial.println(filename);
+    fsUploadFile = SPIFFS.open(filename, "w");
+    filename = String();
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    //DBG_OUTPUT_PORT.print("handleFileUpload Data: "); DBG_OUTPUT_PORT.println(upload.currentSize);
+    if (fsUploadFile) {
+      fsUploadFile.write(upload.buf, upload.currentSize);
+    }
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (fsUploadFile) {
+      fsUploadFile.close();
+    }
+    Serial.print("handleFileUpload Size: "); Serial.println(upload.totalSize);
+  }
 }
 //************************************************************************************
 void WebServer_HandleDataLog()
@@ -1933,13 +1993,14 @@ void FileSystem_ListDirectory()
   }
 }
 //************************************************************************************
-void FileSystem_DeleteFile(String pathname)
+bool FileSystem_DeleteFile(String pathname)
 {
-  SPIFFS.remove(pathname);
-  File f = SPIFFS.open(pathname, "w");
-  f.close();
+  bool val = SPIFFS.remove(pathname);
+  Serial.println(val);
   if (pathname == glb_dataLogPath)
     glb_dataLogCount = 0;
+
+  return val;
 }
 //************************************************************************************
 void DataLog_Create()
@@ -2297,13 +2358,15 @@ void WebServer_Setup()
 {
   Serial.println("HTTP server started");
 
+  webServer.on("/upload", HTTP_POST, []() {
+    webServer.send(200, "text/plain", "");
+  }, WebServer_HandleFileUpload);
   webServer.on("/info", WebServer_HandleText);
   webServer.on("/errorlog", WebServer_HandleErrorLog);
   webServer.on("/datalog", WebServer_HandleDataLog);
-  webServer.on("/files", WebServer_HandleFileDialog);
-  webServer.on("/upload_datalog", WebServer_HandleDatalogUpload);
+  webServer.on("/edit", HTTP_PUT, handleFileCreate);
+  webServer.serveStatic("/", SPIFFS, "/index.htm");
 
-  webServer.on("/", WebServer_HandleRoot);
   webServer.on("/inline", []() {
     webServer.send(200, "text/plain", "this works as well");
   });

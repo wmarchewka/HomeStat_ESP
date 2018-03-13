@@ -22,11 +22,10 @@ void ModbusIP::config(const char* ssid, const char* password) {
     delay(1000);
     int stat = WiFi.status();
     //Serial.println(errorCodes[stat]);
-    Serial.println();
     wifiCounter++;
     if (wifiCounter > 10)
     {
-      Serial.println("Wifi Failed to connect!...");
+      Serial.println("WiFi Failed to connect!...");
       wifiCounter = 0;
       break;
     }
