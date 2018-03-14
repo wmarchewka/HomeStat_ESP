@@ -182,6 +182,8 @@ void RemoteDebug::handle() {
 		// Show the initial message
 
 		//showHelp();
+		telnetClient.print("homestat_esp telnet\n\r");
+
 
 #ifdef CLIENT_BUFFERING
 		// Client buffering - send data in intervals to avoid delays or if its is too big
@@ -471,10 +473,12 @@ size_t RemoteDebug::write(uint8_t character) {
 
 		if (show != "") {
 
-			String send = "(";
-			send.concat(show);
-			send.concat(") ");
+			// String send = "(";
+			// send.concat(show);
+			// send.concat(") ");
 
+			//removed telnet sending debug action
+			String send = "";
 			// Write to telnet buffered
 
 			if (_connected || _serialEnabled) {  // send data to Client

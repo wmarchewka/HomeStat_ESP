@@ -445,13 +445,9 @@ void TelnetServer_ProcessCommand()
   {
     String tReg = lastCmd.substring(11, lastCmd.length());
     tReg = "/" + tReg;
-    Debug.println(tReg);
+    //Debug.println(tReg);
     bool val = FileSystem_PrintFile(tReg, true);
-    if (val)
-    {
-     Debug.println("ok");
-    }
-    else
+    if (!val)
     {
       Debug.println("File not found...");
     }
@@ -553,7 +549,6 @@ void TelnetServer_ProcessCommand()
 //************************************************************************************
 void ErrorLogData_Save(String data)
 {
-
   File glb_errorLog = SPIFFS.open(glb_errorLogPath, "a");
   glb_errorLog.print(glb_TimeLong);
   glb_errorLog.print(",");
@@ -762,6 +757,8 @@ void TimeRoutine()
   secondsCounter++;
   now++;
 
+  if (firstRun) timeout = 5000;
+
   if (debug) Serial.print("seconds:");
   if (debug) Serial.println(secondsCounter);
   if (debug) Serial.print("firstRun:");
@@ -782,12 +779,13 @@ void TimeRoutine()
 
   if (tmpNow == 0)
   {
-    if (debug) Debug.println("No NTP update");
+    if (debug) Serial.println("No NTP update");
     //firstRun = true;
   }
   else
   {
     now = tmpNow;
+    Serial.print(ctime(&now));
     //firstRun = false;
   }
 
@@ -816,8 +814,11 @@ void TimeRoutine()
   endTimeMicros = endTimeMicros - startTimeMicros;
   mb.Hreg(NTP_LOOP_TIME_MB_HREG, (word)endTimeMicros);
   glb_TaskTimes[3] = endTimeMicros;
-  if (endTimeMicros > 100000) Serial.println("big time");
-
+  if (endTimeMicros > 100000)
+  {
+    Serial.print("Time went long:");
+    Serial.println(endTimeMicros);
+  }
 }
 //************************************************************************************
 void ESP_Restart()
@@ -1316,8 +1317,7 @@ void Wifi_CheckStatus()
       Serial.println("Wifi Reconnected !****************************************");
       ErrorLogData_Save("Wifi Reconnected");
       glb_wifiRSSI = WiFi.RSSI();
-      ErrorLogData_Save("Wifi RSSI:");
-      ErrorLogData_Save(String(glb_wifiRSSI));
+      ErrorLogData_Save("Wifi RSSI:" + String(glb_wifiRSSI));
       glb_ipAddress = WiFi.localIP();
       displayed = true;
       wifiNotConnected = 0;
@@ -1790,7 +1790,6 @@ void setup()
   Wifi_Setup();
   TimeSync_Setup();
   TelnetServer_Setup();
-  taskTelnet_8.enable();
   LCD_Setup();
   Modbus_Registers_Create();
   DataLog_Create();
@@ -1940,6 +1939,9 @@ void StartupPrinting_Setup()
   Serial.print("Free RAM ");
   glb_freeHeap = ESP.getFreeHeap();
   Serial.println(glb_freeHeap);
+  Serial.print("Savecrash count:");
+  int tmpCount = SaveCrash.count();
+  ErrorLogData_Save("Savecrash count:" + String(tmpCount));
 }
 //************************************************************************************
 void Wifi_Setup()
@@ -1966,42 +1968,54 @@ void FileSystem_ListDirectory()
   Dir dir = SPIFFS.openDir("/");
   while (dir.next())
   {
-    Debug.print(dir.fileName());
+    String tmp = dir.fileName();
+    tmp.remove(0,1);
+    Debug.print(tmp);
     Debug.print(" : ");
     File f = dir.openFile("r");
     Debug.println(f.size());
+    f.close();
   }
 }
 //************************************************************************************
 bool FileSystem_PrintFile(String filepath, bool debug)
 {
+  String inputString = "";
   if (SPIFFS.exists(filepath))
   {
     //Debug.println("File exists...");
     File f = SPIFFS.open(filepath, "r");
     while (f.available())
     {
-      //Lets read line by line from the file
-      String line = f.readStringUntil('\n');
-      //String line = f.readStringUntil('\n');
-      if (debug)
+      char inChar = (char)f.read();
+      if ( (inChar == '\n') || (inChar == '\r') )
       {
-        Serial.println(line);
-        Debug.println(line);
+        char nextChar = (char)f.read();
+        if ( (nextChar == '\n') || (nextChar == '\r') )
+        {
+          Debug.println(inputString);
+          inputString = "";
+        }
+        else
+        {
+          Debug.println(inputString);
+          inputString = "";
+          inputString += nextChar;
+        }
       }
       else
       {
-        Debug.println(line);
+        inputString += inChar;
       }
     }
     f.close();
+    Debug.println(inputString);
     return true;
   }
   else
   {
     return false;
   }
-
 }
 //************************************************************************************
 bool FileSystem_DeleteFile(String pathname)
@@ -2352,6 +2366,8 @@ void TimeSync_Setup()
 {
   TimeRoutine();
   glb_BootTime = glb_TimeLong;
+  String tmp = "Boot time:";
+  ErrorLogData_Save(tmp + glb_BootTime);
   Serial.print("Boot time:");
   Serial.println(glb_BootTime);
 }
@@ -2443,25 +2459,25 @@ void selftestMcp()
 //************************************************************************************
 void Reset_Reason()
 {
-
   word numResetReason = 0;
+  String tmpRR = ESP.getResetReason();
   Serial.print("Reset Reason:");
-  Serial.println(ESP.getResetReason());
-  ErrorLogData_Save(ESP.getResetReason());
+  Serial.println(tmpRR);
+  ErrorLogData_Save(tmpRR);
 
-  if (ESP.getResetReason() == "Power on")
+  if (tmpRR == "Power on")
     numResetReason = 0; /* normal startup by power on */
-  if (ESP.getResetReason() == "Hardware Watchdog")
+  if (tmpRR == "Hardware Watchdog")
     numResetReason = 1; /* hardware watch dog reset */
-  if (ESP.getResetReason() == "Exception")
+  if (tmpRR == "Exception")
     numResetReason = 2; /* hardware watch dog reset */
-  if (ESP.getResetReason() == "Software Watchdog")
+  if (tmpRR == "Software Watchdog")
     numResetReason = 3; /* exception reset, GPIO status won’t change */
-  if (ESP.getResetReason() == "Software/System restart")
+  if (tmpRR == "Software/System restart")
     numResetReason = 4; /* software restart ,system_restart */
-  if (ESP.getResetReason() == "Deep-Sleep Wake")
+  if (tmpRR == "Deep-Sleep Wake")
     numResetReason = 5; /* wake up from deep-sleep */
-  if (ESP.getResetReason() == "External System")
+  if (tmpRR == "External System")
     numResetReason = 6; /* external system reset */
   mb.Hreg(ESP_RESET_REASON_MB_HREG, (word)numResetReason);
   if ((numResetReason == 6) || (numResetReason == 6))
