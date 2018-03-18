@@ -17,86 +17,87 @@ String errorCodes[12] = {"0", "WIFI NO SSID AVAIL", "WIFI SCAN COMPLETED", "WIFI
 "WIFI CONNECT FAILED", "WIFI CONNECTION_LOST", "WIFI DISCONNECTED", "DHT TIMEOUT", "DHT CHECKSUM" , \
 "TSTAT DETECT ERR", "WIFI IDLE STATUS"};
 
+
 //eeprom settings memory location
-const int ES_SSID = 0;   //size of 32
-const int ES_SSIDPASSWORD = 32 ;   //SIZE OF 32
-const int ES_RESETCOUNTER = 65 ;   //SIZE OF 32
-const int ES_SSID_MD5 = 98;
-const int ES_SSIDPASS_MD5 = 102;
+const int ES_SSID PROGMEM PROGMEM = 0;   //size of 32
+const int ES_SSIDPASSWORD PROGMEM = 32 ;   //SIZE OF 32
+const int ES_RESETCOUNTER PROGMEM = 65 ;   //SIZE OF 32
+const int ES_SSID_MD5 PROGMEM = 98;
+const int ES_SSIDPASS_MD5 PROGMEM = 102;
 
 
 //Modbus Registers Offsets (0-9999)
-const int ANALOG_SENSOR_MB_HREG = 1;
-const int TEMPERATURE_SENSOR_MB_HREG = 2;
-const int HUMIDITY_SENSOR_MB_HREG = 3;
-const int THERMOSTAT_HEAT_CALL_PULSE_VALUE_MB_HREG = 4;
-const int THERMOSTAT_COOL_CALL_PULSE_VALUE_MB_HREG = 5;
-const int THERMOSTAT_FAN_CALL_PULSE_VALUE_MB_HREG = 6;
-const int DHT_STATUS_ERR_TIMEOUT_COUNTER_MB_HREG = 100;
-const int DHT_STATUS_ERR_CHECKSUM_COUNTER_MB_HREG = 101;
-const int DHT_STATUS_ERR_MB_HREG = 102;
-const int BLINK_ERROR_CODE_MB_HREG = 103;
-const int WIFI_STATUS_ERR_MB_HREG = 104;
-const int THERMOSTAT_STATUS_ERR_MB_HREG = 105;
-const int ESP_RESET_REASON_MB_HREG = 106;
-const int ESP_CHIP_ID_HIGH_MB_HREG = 107;
-const int ESP_CHIP_ID_LOW_MB_HREG = 108;
-const int ESP_MEMORY_MB_HREG = 109;
-const int WIFI_NOT_CONNECTED_MB_HREG = 110;
-const int DHT_ROUTINE_TIME_MB_HREG = 111;
-const int TIME_HH_MB_HREG = 112;
-const int TIME_MM_MB_HREG = 113;
-const int TIME_SS_MB_HREG = 114;
-const int GOOD_PACKET_COUNTER_MB_REG = 115;
-const int BAD_PACKET_COUNTER_MB_REG = 116;
-const int MB_ROUTINE_TIME_MB_HREG = 117;
-const int PROCESS_MODBUS_TIME_MB_HREG = 118;
-const int THERM_DETECT_ROUTINE_TIME_MB_HREG = 119;
-const int SCREEN_TIME_MB_HREG = 120;
-const int ESP_BOOT_DEVICE_MB_HREG = 121;
-const int ESP_RESET_COUNTER_MB_HREG = 122;
-const int MB_START_DELAY_COUNTER_MB_REG = 123;
-const int MB_OVERRUN_NEG_COUNTER_MB_REG = 124;
-const int MB_OVERRUN_POS_COUNTER_MB_REG = 125;
-const int NO_CLIENT_COUNTER_MB_REG = 126;
-const int NOT_MODBUS_PACKET_COUNTER_MB_REG = 127;
-const int LARGE_FRAME_COUNTER_MB_REG = 128;
-const int FAILED_WRITE_COUNTER_MB_REG = 129;
-const int NTP_LOOP_TIME_MB_HREG = 130;
-const int ESP_MEMORY_LOW_POINT = 131;
+const int ANALOG_SENSOR_MB_HREG PROGMEM = 1;
+const int TEMPERATURE_SENSOR_MB_HREG PROGMEM = 2;
+const int HUMIDITY_SENSOR_MB_HREG PROGMEM = 3;
+const int THERMOSTAT_HEAT_CALL_PULSE_VALUE_MB_HREG PROGMEM = 4;
+const int THERMOSTAT_COOL_CALL_PULSE_VALUE_MB_HREG PROGMEM = 5;
+const int THERMOSTAT_FAN_CALL_PULSE_VALUE_MB_HREG PROGMEM = 6;
+const int DHT_STATUS_ERR_TIMEOUT_COUNTER_MB_HREG PROGMEM = 100;
+const int DHT_STATUS_ERR_CHECKSUM_COUNTER_MB_HREG PROGMEM = 101;
+const int DHT_STATUS_ERR_MB_HREG PROGMEM = 102;
+const int BLINK_ERROR_CODE_MB_HREG PROGMEM = 103;
+const int WIFI_STATUS_ERR_MB_HREG PROGMEM = 104;
+const int THERMOSTAT_STATUS_ERR_MB_HREG PROGMEM = 105;
+const int ESP_RESET_REASON_MB_HREG PROGMEM = 106;
+const int ESP_CHIP_ID_HIGH_MB_HREG PROGMEM = 107;
+const int ESP_CHIP_ID_LOW_MB_HREG PROGMEM = 108;
+const int ESP_MEMORY_MB_HREG PROGMEM = 109;
+const int WIFI_NOT_CONNECTED_MB_HREG PROGMEM = 110;
+const int DHT_ROUTINE_TIME_MB_HREG PROGMEM = 111;
+const int TIME_HH_MB_HREG PROGMEM = 112;
+const int TIME_MM_MB_HREG PROGMEM = 113;
+const int TIME_SS_MB_HREG PROGMEM = 114;
+const int GOOD_PACKET_COUNTER_MB_REG PROGMEM = 115;
+const int BAD_PACKET_COUNTER_MB_REG PROGMEM = 116;
+const int MB_ROUTINE_TIME_MB_HREG PROGMEM = 117;
+const int PROCESS_MODBUS_TIME_MB_HREG PROGMEM = 118;
+const int THERM_DETECT_ROUTINE_TIME_MB_HREG PROGMEM = 119;
+const int SCREEN_TIME_MB_HREG PROGMEM = 120;
+const int ESP_BOOT_DEVICE_MB_HREG PROGMEM = 121;
+const int ESP_RESET_COUNTER_MB_HREG PROGMEM = 122;
+const int MB_START_DELAY_COUNTER_MB_REG PROGMEM = 123;
+const int MB_OVERRUN_NEG_COUNTER_MB_REG PROGMEM = 124;
+const int MB_OVERRUN_POS_COUNTER_MB_REG PROGMEM = 125;
+const int NO_CLIENT_COUNTER_MB_REG PROGMEM = 126;
+const int NOT_MODBUS_PACKET_COUNTER_MB_REG PROGMEM = 127;
+const int LARGE_FRAME_COUNTER_MB_REG PROGMEM = 128;
+const int FAILED_WRITE_COUNTER_MB_REG PROGMEM = 129;
+const int NTP_LOOP_TIME_MB_HREG PROGMEM = 130;
+const int ESP_MEMORY_LOW_POINT PROGMEM = 131;
 
 //modbus COILS
-const int HEAT_OVERRIDE_MB_COIL = 1;
-const int HEAT_CONTROL_MB_COIL = 2;
-const int COOL_OVERRIDE_MB_COIL = 3;
-const int COOL_CONTROL_MB_COIL = 4;
-const int FAN_OVERRIDE_MB_COIL = 5;
-const int FAN_CONTROL_MB_COIL = 6;
-const int THERMOSTAT_HEAT_CALL_MB_COIL = 7;
-const int THERMOSTAT_COOL_CALL_MB_COIL = 8;
-const int THERMOSTAT_FAN_CALL_MB_COIL = 9;
-const int THERMOSTAT_STATUS_MB_COIL = 10;
-const int ESP_RESTART_MB_COIL = 11;
-const int ESP_CLEAR_SAVECRASH_DATA = 12;
+const int HEAT_OVERRIDE_MB_COIL PROGMEM = 1;
+const int HEAT_CONTROL_MB_COIL PROGMEM = 2;
+const int COOL_OVERRIDE_MB_COIL PROGMEM = 3;
+const int COOL_CONTROL_MB_COIL PROGMEM = 4;
+const int FAN_OVERRIDE_MB_COIL PROGMEM = 5;
+const int FAN_CONTROL_MB_COIL PROGMEM = 6;
+const int THERMOSTAT_HEAT_CALL_MB_COIL PROGMEM = 7;
+const int THERMOSTAT_COOL_CALL_MB_COIL PROGMEM = 8;
+const int THERMOSTAT_FAN_CALL_MB_COIL PROGMEM = 9;
+const int THERMOSTAT_STATUS_MB_COIL PROGMEM = 10;
+const int ESP_RESTART_MB_COIL PROGMEM = 11;
+const int ESP_CLEAR_SAVECRASH_DATA PROGMEM = 12;
 
 //pin mappping to io expander
-const int HEAT_OVERRIDE_PIN = 0;
-const int HEAT_CONTROL_PIN = 1;
-const int COOL_OVERRIDE_PIN = 2;
-const int COOL_CONTROL_PIN = 3;
-const int FAN_OVERRIDE_PIN = 4;
-const int FAN_CONTROL_PIN = 5;
-const int LED = 7;
+const int HEAT_OVERRIDE_PIN PROGMEM = 0;
+const int HEAT_CONTROL_PIN PROGMEM = 1;
+const int COOL_OVERRIDE_PIN PROGMEM = 2;
+const int COOL_CONTROL_PIN PROGMEM = 3;
+const int FAN_OVERRIDE_PIN PROGMEM = 4;
+const int FAN_CONTROL_PIN PROGMEM = 5;
+const int LED PROGMEM = 7;
 
 //pin mappings to esp8266
-const int LIGHT_SENSOR_PIN = A0;
-const int DHT11_DATA_PIN = 2;
-const int I2C_CLOCK_PIN = 4;
-const int I2C_DATA_PIN = 5;
-const int THERMOSTAT_HEAT_CALL_PIN = 13;
-const int THERMOSTAT_COOL_CALL_PIN = 15;
-//const int THERMOSTAT_FAN_CALL_PIN = 10;
-const int TEST_PIN = 12;
+const int LIGHT_SENSOR_PIN PROGMEM = A0;
+const int DHT11_DATA_PIN PROGMEM = 2;
+const int I2C_CLOCK_PIN PROGMEM = 4;
+const int I2C_DATA_PIN PROGMEM = 5;
+const int THERMOSTAT_HEAT_CALL_PIN PROGMEM = 13;
+const int THERMOSTAT_COOL_CALL_PIN PROGMEM = 15;
+//const int THERMOSTAT_FAN_CALL_PIN PROGMEM = 10;
+const int TEST_PIN PROGMEM = 12;
 
 //misc variables
 
@@ -114,13 +115,13 @@ int glb_humidity = 0;
 
 char glb_SSID[32];
 char glb_SSIDpassword[32];
-const word glb_eepromCoilOffset = 127;
-const word glb_maxEEpromSize = 2048;
-const word glb_maxHregSize = 256;
-const word glb_maxCoilSize = 256;
-const word glb_eepromSettingsOffset = 0;
-const bool COIL_OFF = false;
-const bool COIL_ON = true;
+const word glb_eepromCoilOffset PROGMEM = 127;
+const word glb_maxEEpromSize PROGMEM = 2048;
+const word glb_maxHregSize PROGMEM = 256;
+const word glb_maxCoilSize PROGMEM = 256;
+const word glb_eepromSettingsOffset PROGMEM = 0;
+const bool COIL_OFF PROGMEM = false;
+const bool COIL_ON PROGMEM = true;
 word glb_errorDHT = 0;
 word glb_errorThermostat = 0;
 word glb_WiFiStatus = 0;
@@ -132,6 +133,7 @@ String glb_dhtStatusError = "";
 String glb_thermostatStatus = "";
 String glb_dataLogPath = "/datalog.csv";
 String glb_errorLogPath = "/errorlog.txt";
+String glb_debugLogPath = "/debuglog.txt";
 File glb_temperatureLog;
 File glb_errorLog;
 uint32_t glb_resetCounter = 0;
@@ -153,6 +155,7 @@ String glb_BootTime = "";
 int glb_dataLogCount = 0;
 long glb_wifiRSSI = 0;
 int glb_TaskTimes[30];
+String glb_testLED = "";
 
 //function declarations
 void ChipID_Acquire();
@@ -165,7 +168,7 @@ void EEPROM_Setup();
 void EEPROM_Process();
 void ErrorCodes_Process();
 void ESP_Restart();
-void DataLog_Create();
+void FileSystem_DataLogCreate();
 void IO_ControlPins();
 void IO_Pins_Setup();
 void Interrupt_Detect_AC();
@@ -178,7 +181,7 @@ void LED_Off();
 void LCD_DrawText(int, int, String, uint16_t,uint16_t);
 void LCD_Setup();
 void EEPROM_LoadSettings();
-void DataLog_Save();
+void FileSystem_DataLogSave();
 void Modbus_Process();
 void Modbus_ReadData();
 void Modbus_Client_Send();
@@ -198,7 +201,7 @@ void TimeSync_Setup();
 void Thermostat_Detect();
 void WebServer_Process();
 void WebServer_Setup();
-void WebServer_HandleText();
+void WebServer_HandleInformation();
 void WebServer_HandleNotFound();
 void WebServer_HandleDataLog();
 void WebServer_HandleErrorLog();
@@ -219,5 +222,11 @@ void FileSystem_CreateHTML();
 void testMcpOutputPin(int , int );
 void testEspOutputPin(int , int );
 void selftestMcp();
+void FileSystem_DebugDataSave(String);
+void WebServer_HandleRoot();
+void handleSubmit();
+void FileSystem_DebugLogCreate();
+String WebServer_getPage();
+void mDNS_Setup();
 
 #endif
