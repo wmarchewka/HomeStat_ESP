@@ -33,6 +33,9 @@
 #include <ESP8266FtpServer.h>
 #include <RemoteDebug.h>
 #include "tester.h"
+#include <WiFiManager.h>
+#include "HTTPSRedirect.h"
+#include "DebugMacros.h"
 
 //classes
 ModbusIP mb; //ModbusIP object
@@ -45,6 +48,8 @@ WiFiServer DataServer(DATASERVER_PORT);
 IPAddress glb_ipAddress;
 RemoteDebug Debug;
 File fsUploadFile;
+WiFiManager wifiManager;
+HTTPSRedirect client(httpsPort);
 
 Task taskModbusReadData_1(30, TASK_FOREVER, &Modbus_ReadData, NULL);
 Task taskDHT11Temp_2(2000, TASK_FOREVER, &DHT11_TempHumidity, NULL);
@@ -60,12 +65,38 @@ Task taskErrorsCodesProcess_11(500, TASK_FOREVER, &ErrorCodes_Process, NULL);
 Task taskModbusProcess_12(50, TASK_FOREVER, &Modbus_Process, NULL);
 Task taskEEpromProcess_13(1000, TASK_FOREVER, &EEPROM_Process, NULL);
 Task taskMBcoilReg11_14(TASK_IMMEDIATE, TASK_ONCE, NULL, NULL, false, NULL, &ESP_Restart);
-Task taskWebServer_Process_15(1000, TASK_FOREVER, &WebServer_Process, NULL);
+Task taskWebServer_Process_15(50, TASK_FOREVER, &WebServer_Process, NULL);
 Task taskDataServer_Process_16(10, TASK_FOREVER, &DataServer_Process, NULL);
 Task taskModbusClientSend_17(5000, TASK_FOREVER, &Modbus_Client_Send, NULL);
 Task taskOTA_Update_18(100, TASK_FOREVER, &OTA_Update, NULL);
 Task taskLogDataSave_19(60000, TASK_FOREVER, &FileSystem_DataLogSave, NULL);
 Task taskLCDUpdate_20(1000, TASK_FOREVER, &LCD_Update, NULL);
+//************************************************************************************
+bool postData(String tag, float value){
+
+    //client.connect(host, httpsPort);
+    client.setPrintResponseBody(true);
+    client.setContentTypeHeader("application/json");
+    String payload_base =  "{\"command\": \"appendRow\", \
+                        \"sheet_name\": \"Sheet1\", \
+                        \"values\": ";
+    String free_heap_before = "111";
+    String free_stack_before = "222";
+    String payload = "";
+    payload = payload_base + "\"" + free_heap_before + "," + free_stack_before + "\"}";
+
+    tag = "test";
+    value = 72.1;
+    String urlFinal = url + "tag=" + tag + "&value=" + String(value);
+    Serial.println(urlFinal);
+    Serial.println(host);
+    Serial.println(googleRedirHost);
+
+    client.connect(host, httpsPort);
+    client.POST(urlFinal, host, payload, false);
+
+    return true;
+}
 //************************************************************************************
 void LCD_Update()
 {
@@ -76,7 +107,7 @@ void LCD_Update()
   String newbuf1 = "Temp:" + String(glb_temperature);
   String newbuf2 = "Humd:" + String(glb_humidity);
   String newbuf3 = "Pkts:" + String(glb_dataServerCounter);
-  LCD_DrawText(0, 0, "Temp    :" + String(glb_temperature), TFT_WHITE, TFT_BLACK);
+  LCD_DrawText(0, 0,  "Temp    :" + String(glb_temperature), TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 10, "Humidity:" + String(glb_humidity), TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 20, "Pkts    :" + String(glb_dataServerCounter), TFT_WHITE, TFT_BLACK);
   LCD_DrawText(0, 30, "Status  :" + glb_dhtStatusError, TFT_WHITE, TFT_BLACK);
@@ -116,9 +147,14 @@ void TelnetServer_ProcessCommand()
       Debug.print(F("File system formatted..."));
     }
   }
+  else if (lastCmd == (F("post data")))
+  {
+    bool ret = postData("Temperature", 72.1);
+    Debug.println(ret);
+
+  }
   else if (lastCmd == (F("file list")))
   {
-    Debug.println(F("File list"));
     FileSystem_ListDirectory();
   }
   else if (lastCmd == (F("temperature")))
@@ -337,6 +373,16 @@ void TelnetServer_ProcessCommand()
   {
     Debug.println(WiFi.RSSI());
   }
+  else if (lastCmd.startsWith("wifi reset settings"))
+  {
+    wifiManager.resetSettings();
+    Debug.println(WiFi.RSSI());
+  }
+  else if (lastCmd.startsWith("wifi config"))
+  {
+    wifiManager.startConfigPortal("HOMESTAT");
+    Debug.println(F("wifi config"));
+  }
   // else if (lastCmd.startsWith("savecrash clear"))
   // {
   //   SaveCrash.clear();
@@ -522,6 +568,9 @@ void TelnetServer_ProcessCommand()
     Debug.println(F("set wifi pass"));
     Debug.println(F("wifi scan"));
     Debug.println(F("wifi rssi"));
+    Debug.println(F("wifi reset settings"));
+    Debug.println(F("wifi config"));
+    Debug.println(F("wifi resets"));
     // Debug.println(F("savecrash clear"));
     // Debug.println(F("savecrash print"));
     // Debug.println(F("savecrash count"));
@@ -531,7 +580,6 @@ void TelnetServer_ProcessCommand()
     Debug.println(F("reset clear"));
     Debug.println(F("free sketch size"));
     Debug.println(F("tstat status"));
-    Debug.println(F("wifi resets"));
     Debug.println(F("debug serial on"));
     Debug.println(F("debug serial off"));
     Debug.println(F("datalog debug on"));
@@ -550,6 +598,25 @@ void TelnetServer_ProcessCommand()
     Debug.println(F("set mcp pin xx y"));
     Debug.println(F("task times"));
     Debug.println(F("debugdata save"));
+  }
+}
+//************************************************************************************
+void FileSystem_SystemDataSave(String logData) {
+
+  bool debug = 0;
+
+  int startTimeMicros = micros();
+  int endTimeMicros = 0;
+
+  File logSystemData = SPIFFS.open(glb_systemLogPath, "a");
+  if (debug) Serial.println(glb_systemLogPath);
+
+  if (logSystemData)
+  {
+    logSystemData.println(glb_TimeLong);
+    logSystemData.print(",");
+    logSystemData.println(logData);
+    logSystemData.close();
   }
 }
 //************************************************************************************
@@ -702,7 +769,7 @@ void FileSystem_DataLogSave()
     if (glb_logDataDebug) Debug.print(F("Filelog size..."));
     if (glb_logDataDebug) Debug.println(glb_temperatureLog.size());
     glb_dataLogCount++;
-    logdata = logdata + glb_dataLogCount;
+    logdata = logdata + String(glb_dataLogCount);
     logdata = logdata + (F(","));
     logdata = logdata + (glb_timeMonth);
     logdata = logdata + (F(","));
@@ -1160,13 +1227,15 @@ void LED_Error()
 // the hardware (LED in this example)
 bool LED_OnEnable()
 {
+
+  int interval = 500;
   int startTimeMicros = micros();
   int endTimeMicros = 0;
   bool debug = 0;
-  taskLED_OnDisable_10.setInterval(500);
+  taskLED_OnDisable_10.setInterval(interval);
   taskLED_OnDisable_10.setCallback(&LED_On);
   taskLED_OnDisable_10.enable();
-  taskLED_onEnable_9.setInterval((glb_BlinkErrorCode * 1000) - 100);
+  taskLED_onEnable_9.setInterval((glb_BlinkErrorCode * interval * 2) - 100);
   if (debug) Serial.print(F("Blink Error Code:"));
   if (debug) Serial.println(glb_BlinkErrorCode);
   endTimeMicros = micros();
@@ -1212,13 +1281,20 @@ void LED_Off()
 void Thermostat_Detect()
 {
   bool debug = 0;
-  if (debug)
-    Serial.println(F("Processing thermostat detect..."));
+  if (debug) Serial.println(F("Processing thermostat detect..."));
 
   int startTimeMicros = micros();
   int endTimeMicros;
   word localval = 0;
-  glb_thermostatStatus = (F("Thermostat no call"));
+  glb_thermostatStatus = (F("No call"));
+  static bool hs;
+  static bool cs;
+  static bool fs;
+
+
+  //test
+  //glb_heatPulseDuration = 1000;
+  //glb_heatPulseCounter = 100;
 
   mb.Hreg(THERMOSTAT_HEAT_CALL_PULSE_VALUE_MB_HREG, (word)glb_heatPulseDuration);
   mb.Hreg(THERMOSTAT_COOL_CALL_PULSE_VALUE_MB_HREG, (word)glb_coolPulseDuration);
@@ -1257,55 +1333,64 @@ void Thermostat_Detect()
   if (glb_heatPulseCounter >= 30)
   {
     mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL, COIL_ON);
+    if (hs==false) FileSystem_SystemDataSave(F("HEAT ON"));
+    hs = true;
   }
   else
   {
     mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL, COIL_OFF);
+    if (hs==true) FileSystem_SystemDataSave(F("HEAT OFF"));
+    hs = false;
   }
   glb_heatPulseCounter = 0;
 
   if (glb_coolPulseCounter >= 30)
   {
     mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL, COIL_ON);
+    if (cs==false) FileSystem_SystemDataSave(F("COOL ON"));
+    cs = true;
   }
   else
   {
     mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL, COIL_OFF);
+    if (cs==true) FileSystem_SystemDataSave(F("COOL OFF"));
+    cs = false;
   }
   glb_coolPulseCounter = 0;
 
   if (glb_fanPulseCounter >= 30)
   {
     mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL, COIL_ON);
+    if (fs==false) FileSystem_SystemDataSave(F("FAN ON"));
+    fs = true;
   }
   else
   {
     mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL, COIL_OFF);
+    if (fs==true) FileSystem_SystemDataSave(F("FAN OFF"));
+    fs = false;
   }
   glb_fanPulseCounter = 0;
 
   if (mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL))
   {
     glb_thermostatStatus = (F("Heat call..."));
-    ErrorLogData_Save(F("Heat call..."));
   }
   if (mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL))
   {
     glb_thermostatStatus = (F("Cool call..."));
-    ErrorLogData_Save(F("Cool call..."));
+    FileSystem_SystemDataSave(F("Cool call"));
   }
   if (mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL))
   {
     glb_thermostatStatus = (F("Cool call..."));
-    ErrorLogData_Save(F("Fan call..."));
+    FileSystem_SystemDataSave(F("Fan call"));
   }
 
   //check more than one call. if so then error
   bool pulseCheck = mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL) && mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL) && mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL);
-  if (debug)
-    Serial.print(F(" EC:"));
-  if (debug)
-    Serial.println(pulseCheck);
+  if (debug) Serial.print(F(" EC:"));
+  if (debug) Serial.println(pulseCheck);
   if (pulseCheck)
   {
     glb_thermostatStatus = (F("Error"));
@@ -1313,12 +1398,20 @@ void Thermostat_Detect()
     glb_errorThermostat = 9;
     localval = 1;
   }
-  if (debug)
+  if (debug) {
+    Serial.print("Thermostat Heat Call Coil : ");
     Serial.println(mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL));
-  if (debug)
+  }
+
+  if (debug){
+    Serial.print("Thermostat Cool Call Coil : ");
     Serial.println(mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL));
-  if (debug)
+  }
+
+  if (debug){
+    Serial.print("Thermostat Fan Call Coil : ");
     Serial.println(mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL));
+  }
   if (pulseCheck == 1)
   {
     //glb_thermostatStatus = "No error";
@@ -1327,12 +1420,9 @@ void Thermostat_Detect()
   }
 
   mb.Hreg(THERMOSTAT_STATUS_ERR_MB_HREG, (word)localval);
-  if (debug)
-    Serial.print(F("TS:"));
-  if (debug)
-    Serial.println(glb_thermostatStatus);
-  if (debug)
-    Serial.print(F("T:"));
+  if (debug) Serial.print(F("ThermoStatus:"));
+  if (debug) Serial.println(glb_thermostatStatus);
+  if (debug) Serial.print(F("Time:"));
 
   endTimeMicros = micros();
   endTimeMicros = endTimeMicros - startTimeMicros;
@@ -1559,10 +1649,9 @@ void Interrupt_Detect_AC()
   if (glb_heatPulseDuration > 10)
   {
     glb_heatPulseCounter++;
-    glb_fanPulseCounter++;
-    glb_coolPulseCounter++;
-    if (debug)
-      Serial.println(glb_heatPulseDuration);
+    //glb_fanPulseCounter++;
+    //glb_coolPulseCounter++;
+    if (debug) Serial.println(glb_heatPulseDuration);
   }
 
   endDetectMicros = startDetectMicros;
@@ -1718,6 +1807,9 @@ String WebServer_getPage(){
   page += glb_temperature;
   page += (F("<li>Wifi RSSI : "));
   page += WiFi.RSSI();
+  page += (F("</li>"));
+  page += (F("<li>Thermostat : "));
+  page += glb_thermostatStatus;
   page += (F("</li>"));
   page += (F("<li>Humidity : "));
   page += glb_humidity;
@@ -1987,12 +2079,14 @@ void setup()
   ErrorLog_Create();
   EEPROM_Setup();
   EEPROM_LoadSettings();
-  Wifi_Setup();
+  WiFiManager_Setup();
+  //Wifi_Setup();
   TimeSync_Setup();
   TelnetServer_Setup();
   mDNS_Setup();
   LCD_Setup();
   Modbus_Registers_Create();
+  FileSystem_SystemLogCreate();
   FileSystem_DataLogCreate();
   FileSystem_DebugLogCreate();
   I2C_Setup();
@@ -2025,55 +2119,56 @@ void EEPROM_LoadSettings()
 {
 
   Serial.println(F("Loading settings from EEPROM.."));
+  //wifi ssid and password are stord in the wifi manager Library
 
-  int i = 0;
 
-  //strcpy(glb_SSID, glb_defaultSSID);
-  //strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
-  //EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
-  //EEPROM.put(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
-  //EEPROM.commit();
+  // int i = 0;
+  //
+  // //strcpy(glb_SSID, glb_defaultSSID);
+  // //strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
+  // //EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
+  // //EEPROM.put(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
+  // //EEPROM.commit();
+  //
+  // strcpy(glb_SSID, "");
+  // strcpy(glb_SSIDpassword, "");
+  //
+  // EEPROM.get(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
+  // EEPROM.get(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
+  //
+  //
+  // //for(i=0;glb_SSID[i] != '\0';i++)
+  // for(i=0;i < 32;i++)
+  // {
+  //   Serial.print(i);Serial.print(":");Serial.print(glb_SSID[i]);Serial.print(":");
+  //   if ( (isAlphaNumeric(glb_SSID[i])) || (isPunct(glb_SSID[i])) )
+  //   {
+  //     Serial.println("ok");
+  //   }
+  //   else
+  //   {
+  //     strcpy(glb_SSID, glb_defaultSSID);
+  //     Serial.println(F("Using default SSID"));
+  //     break;
+  //   }
+  // }
+  //
+  // for(i=0;glb_SSIDpassword[i] != '\0';i++)
+  // {
+  //   //Serial.print(i);Serial.print(":");Serial.print(glb_SSIDpassword[i]);Serial.print(":");
+  //   if ( (isAlphaNumeric(glb_SSIDpassword[i])) || (isPunct(glb_SSIDpassword[i])) )
+  //   {
+  //     Serial.println("ok");
+  //   }
+  //   else
+  //   {
+  //     strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
+  //     Serial.println(F("Using default PASS"));
+  //     break;
+  //   }
+  // }
 
-  strcpy(glb_SSID, "");
-  strcpy(glb_SSIDpassword, "");
 
-  EEPROM.get(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
-  EEPROM.get(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
-
-  for(i=0;glb_SSID[i] != '\0';i++)
-  {
-    //Serial.print(i);Serial.print(":");Serial.print(glb_SSID[i]);Serial.print(":");
-    if ( (isAlphaNumeric(glb_SSID[i])) || (isPunct(glb_SSID[i])) )
-    {
-      //Serial.println("ok");
-    }
-    else
-    {
-      strcpy(glb_SSID, glb_defaultSSID);
-      Serial.println(F("Using default SSID"));
-      break;
-    }
-  }
-
-  for(i=0;glb_SSIDpassword[i] != '\0';i++)
-  {
-    //Serial.print(i);Serial.print(":");Serial.print(glb_SSIDpassword[i]);Serial.print(":");
-    if ( (isAlphaNumeric(glb_SSIDpassword[i])) || (isPunct(glb_SSIDpassword[i])) )
-    {
-      //Serial.println("ok");
-    }
-    else
-    {
-      strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
-      Serial.println(F("Using default PASS"));
-      break;
-    }
-  }
-
-  Serial.print(F("SSID:"));
-  Serial.println(glb_SSID);
-  Serial.print(F("SSID password:"));
-  Serial.println(glb_SSIDpassword);
 }
 
 //************************************************************************************
@@ -2156,11 +2251,33 @@ void StartupPrinting_Setup()
   //ErrorLogData_Save("Savecrash count:" + String(tmpCount));
 }
 //************************************************************************************
+void Modbus_CreateTCP()
+{
+  mb.config();
+}
+//************************************************************************************
 void Wifi_Setup()
 {
+
   Serial.println(F("Trying to connect to WiFI..."));
   //Serial.setDebugOutput(true);
-  mb.config(glb_SSID, glb_SSIDpassword);
+  word wifiCounter = 0;
+
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(glb_SSID, glb_SSIDpassword);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(1000);
+    int stat = WiFi.status();
+    //Serial.println(errorCodes[stat]);
+    wifiCounter++;
+    if (wifiCounter > 10)
+    {
+      Serial.println("WiFi Failed to connect!...");
+      wifiCounter = 0;
+      break;
+    }
+  }
   glb_ipAddress = WiFi.localIP();
   Serial.print(F("IP address: "));
   Serial.println(WiFi.localIP());
@@ -2240,6 +2357,37 @@ bool FileSystem_DeleteFile(String pathname)
   return val;
 }
 //************************************************************************************
+void FileSystem_SystemLogCreate()
+{
+  bool debug = 0;
+
+  Serial.print(F("Creating System Log File:"));
+
+  if (SPIFFS.begin())
+  {
+    Serial.print(F("File system already mounted:"));
+  }
+  else
+  {
+    SPIFFS.begin();
+  }
+
+  if (SPIFFS.exists(glb_systemLogPath))
+  {
+    Serial.print(F("File exists:"));
+    File f = SPIFFS.open(glb_systemLogPath, "r");
+    Serial.print(F("File size is:"));
+    Serial.println(f.size());
+    f.close();
+  }
+  else
+  {
+    Serial.println(F("File not found error..."));
+    File f = SPIFFS.open(glb_systemLogPath, "w");
+    f.close();
+  }
+}
+//************************************************************************************
 void FileSystem_DebugLogCreate()
 {
   bool debug = 0;
@@ -2274,8 +2422,7 @@ void FileSystem_DataLogCreate()
 {
   bool debug = 1;
 
-  if (debug)
-    Serial.print(F("Creating Log File:"));
+  Serial.print(F("Creating DataLog File:"));
 
   if (SPIFFS.begin())
   {
@@ -2297,6 +2444,8 @@ void FileSystem_DataLogCreate()
   else
   {
     Serial.println(F("File not found error..."));
+    File f = SPIFFS.open(glb_dataLogPath, "w");
+    f.close();
   }
 }
 //************************************************************************************
@@ -2356,12 +2505,14 @@ void OTA_Setup()
       type = "sketch";
     else // U_SPIFFS
       type = "filesystem";
-    DataServer.stop();
-    webServer.stop();
-    mb.stop();
-    Debug.stop();
+
+    DataServer.stop();      //stop dataserver
+    webServer.stop();       //stop WebServer_Root
+    mb.stop();              //stop modbus server
+    Debug.stop();           //stop debug telnet server
 
     // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+    if (type=="filesystem") SPIFFS.end();
 
     Serial.println("Start updating " + type);
   });
@@ -2372,7 +2523,6 @@ void OTA_Setup()
 
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     Serial.printf("Progress: %u%%\n", (progress / (total / 100)));
-    //Serial.print("\033[0H\033[0J");
   });
 
   ArduinoOTA.onError([](ota_error_t error) {
@@ -2396,7 +2546,6 @@ void OTA_Setup()
 //************************************************************************************
 void Tasks_Enable_Setup()
 {
-
   Serial.println(F("Enabling Tasks..."));
   taskModbusReadData_1.enable();
   taskDHT11Temp_2.enable();
@@ -2742,4 +2891,25 @@ void Reset_Reason()
   ErrorLogData_Save(String(tmp + glb_resetCounter));
   Serial.print(F("Reset counter:"));
   Serial.println(glb_resetCounter);
+}
+//************************************************************************************
+void WiFiManager_Setup(){
+
+  wifiManager.setDebugOutput(true);
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+  wifiManager.autoConnect("HOMESTAT");
+  wifiManager.setConfigPortalTimeout(60);
+  glb_ipAddress = WiFi.localIP();
+  Serial.print(F("IP address: "));
+  Serial.println(WiFi.localIP());
+  wifiManager.getPassword().toCharArray(glb_SSIDpassword, 32) ;
+  wifiManager.getSSID().toCharArray(glb_SSID, 32);
+  Serial.print(F("SSID:"));
+  Serial.println(glb_SSID);
+  Serial.print(F("SSID password:"));
+  Serial.println(glb_SSIDpassword);
+}
+//************************************************************************************
+void saveConfigCallback () {
+  Serial.println("Should save config");
 }

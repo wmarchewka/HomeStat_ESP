@@ -134,6 +134,7 @@ String glb_thermostatStatus = "";
 String glb_dataLogPath = "/datalog.csv";
 String glb_errorLogPath = "/errorlog.txt";
 String glb_debugLogPath = "/debuglog.txt";
+String glb_systemLogPath = "/systemlog.txt";
 File glb_temperatureLog;
 File glb_errorLog;
 uint32_t glb_resetCounter = 0;
@@ -156,6 +157,12 @@ int glb_dataLogCount = 0;
 long glb_wifiRSSI = 0;
 int glb_TaskTimes[30];
 String glb_testLED = "";
+String googleScript="https://script.google.com/macros/s/AKfycbzDdjsWgX7WhfSuShcVs8qzJUPmSERMQtKJzux45wgXhkLyEmGn/exec";
+const int httpsPort = 443;
+const char* host = "script.google.com";
+const char* googleRedirHost = "script.googleusercontent.com";
+const char* GScriptId = "AKfycbzDdjsWgX7WhfSuShcVs8qzJUPmSERMQtKJzux45wgXhkLyEmGn";
+String url = String("/macros/s/") + GScriptId + "/exec?";
 
 //function declarations
 void ChipID_Acquire();
@@ -228,5 +235,11 @@ void handleSubmit();
 void FileSystem_DebugLogCreate();
 String WebServer_getPage();
 void mDNS_Setup();
+void WiFiManager_Setup();
+void Modbus_CreateTCP();
+void saveConfigCallback();
+void FileSystem_SystemDataSave(String);
+void FileSystem_SystemLogCreate();
+bool postData(String , float );
 
 #endif

@@ -12,24 +12,8 @@ WiFiServer server(MODBUSIP_PORT);
 ModbusIP::ModbusIP() {
 }
 
-void ModbusIP::config(const char* ssid, const char* password) {
-	word wifiCounter = 0;
+void ModbusIP::config() {
 
-	WiFi.mode(WIFI_STA);
-	WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(1000);
-    int stat = WiFi.status();
-    //Serial.println(errorCodes[stat]);
-    wifiCounter++;
-    if (wifiCounter > 10)
-    {
-      Serial.println("WiFi Failed to connect!...");
-      wifiCounter = 0;
-      break;
-    }
-  }
 	server.begin();
 	server.setNoDelay(true);
 }

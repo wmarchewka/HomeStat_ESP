@@ -1,0 +1,12 @@
+Google ESP_DATA
+
+key:
+
+11K7DsLYVHB_Jowj0RJcPHW5XikqilMfHq26OPOfaTaM
+
+Sheet names:
+
+Summary
+Datalogger
+
+https://script.google.com/macros/s/AKfycbzDdjsWgX7WhfSuShcVs8qzJUPmSERMQtKJzux45wgXhkLyEmGn/exec
