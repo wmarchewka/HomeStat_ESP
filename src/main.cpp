@@ -420,6 +420,16 @@ void TelnetServer_ProcessCommand()
   {
     Debug.println(glb_thermostatStatus);
   }
+  else if (lastCmd.startsWith("tstat debug on"))
+  {
+    glb_tstatDebugOn = true;
+    Debug.println("ok");
+  }
+  else if (lastCmd.startsWith("tstat debug off"))
+  {
+    glb_tstatDebugOn = false;
+    Debug.println("ok");
+  }
   else if (lastCmd.startsWith("reset count"))
   {
     Debug.println(glb_resetCounter);
@@ -613,7 +623,7 @@ void FileSystem_SystemDataSave(String logData) {
 
   if (logSystemData)
   {
-    logSystemData.println(glb_TimeLong);
+    logSystemData.print(glb_TimeLong);
     logSystemData.print(",");
     logSystemData.println(logData);
     logSystemData.close();
@@ -951,28 +961,24 @@ void TimeRoutine()
 
   if (secondsCounter >= 300 || (firstRun))
   {
-    while ( (millis() - start) < timeout)
+    while ( millis() < (timeout + start) )
     {
       tmpNow = time(nullptr);
       if (tmpNow != 0)
-        break;
+      {
         firstRun = false;
-      secondsCounter = 0;
+        secondsCounter = 0;
+        now = tmpNow;
+        Serial.print("Got time from timeserver : ");
+        Serial.print(ctime(&now));
+        break;
+      }
       delay(10);
     }
   }
 
-  if (tmpNow == 0)
-  {
-    if (debug) Serial.println(F("No NTP update"));
-    //firstRun = true;
-  }
-  else
-  {
-    now = tmpNow;
-    if (debug) Serial.print(ctime(&now));
-    //firstRun = false;
-  }
+  //Serial.println(F("No NTP update"));
+
 
   if (debug) Serial.print(F("now2:"));
   if (debug) Serial.println(now);
@@ -1280,7 +1286,7 @@ void LED_Off()
 //************************************************************************************
 void Thermostat_Detect()
 {
-  bool debug = 0;
+  bool debug = glb_tstatDebugOn;
   if (debug) Serial.println(F("Processing thermostat detect..."));
 
   int startTimeMicros = micros();
@@ -1290,7 +1296,6 @@ void Thermostat_Detect()
   static bool hs;
   static bool cs;
   static bool fs;
-
 
   //test
   //glb_heatPulseDuration = 1000;
@@ -1333,6 +1338,7 @@ void Thermostat_Detect()
   if (glb_heatPulseCounter >= 30)
   {
     mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL, COIL_ON);
+    glb_heatRunTimeTotal++;
     if (hs==false) FileSystem_SystemDataSave(F("HEAT ON"));
     hs = true;
   }
@@ -1840,6 +1846,9 @@ void WebServer_HandleErrorLog()
   if (debug) Serial.print(webServer.argName(0));
   if (debug) Serial.print(" Args = ");Serial.println(action);
 
+  String filename = "errorlog" + glb_timeMonth + "_" + glb_timeDay + "_" + glb_timeYear + "_";
+  filename = filename + glb_timeHour + "_" + glb_timeMin + "_" + glb_timeSec + ".csv";
+
   String page = (F("<html lang=en><head>"));
   page += (F("<title>Home Stat</title>"));
   page += (F("<style> body { background-color: #fffff; font-family: Arial, Helvetica, Sans-Serif; Color: #000088; }</style>"));
@@ -1859,7 +1868,7 @@ void WebServer_HandleErrorLog()
       int siz = f.size();
       webServer.setContentLength(CONTENT_LENGTH_UNKNOWN);
       if (action=="view") webServer.send(200, (F("text/html")), page);
-      if (action=="download") webServer.sendHeader((F("Content-Disposition")), (F("attachment; filename=datalog.csv")));
+      if (action=="download") webServer.sendHeader( (F("Content-Disposition")), "attachment; filename=" + filename);
       if (action=="download") webServer.streamFile(f, (F("application/octet-stream")));
       if (action=="view")
       {
@@ -1976,6 +1985,9 @@ void WebServer_HandleDataLog()
   page += (F("<a href=/errorlog?action=download>Errorlog Download</a>&emsp;&emsp;"));
   page += (F("<a href=/errorlog?action=view>Errorlog View</a><br><br><pre>"));
 
+  String filename = "datalog" + glb_timeMonth + "_" + glb_timeDay + "_" + glb_timeYear + "_";
+  filename = filename + glb_timeHour + "_" + glb_timeMin + "_" + glb_timeSec + ".csv";
+
   if (SPIFFS.exists(glb_dataLogPath))
   {
     File f = SPIFFS.open(glb_dataLogPath, "r");
@@ -1985,7 +1997,7 @@ void WebServer_HandleDataLog()
       int siz = f.size();
       webServer.setContentLength(CONTENT_LENGTH_UNKNOWN);
       if (action=="view") webServer.send(200, (F("text/html")), page);
-      if (action=="download") webServer.sendHeader((F("Content-Disposition")), (F("attachment; filename=datalog.csv")));
+      if (action=="download") webServer.sendHeader( (F("Content-Disposition")), "attachment; filename=" + filename );
       if (action=="download") webServer.streamFile(f, (F("application/octet-stream")));
       if (action=="view")
       {
@@ -2074,16 +2086,18 @@ void setup()
 {
   Serial.begin(115200);
   Serial.println();
+  Serial.print(F("Free RAM "));
+  glb_freeHeap = ESP.getFreeHeap();
+  Serial.println(glb_freeHeap);
   Serial.println(F("Booting ESP8266"));
   ErrorLogData_Save(F("Booting ESP8266"));
   ErrorLog_Create();
   EEPROM_Setup();
   EEPROM_LoadSettings();
   WiFiManager_Setup();
-  //Wifi_Setup();
+  //Wifi_Setup();     //taken over by WiFiManager
   TimeSync_Setup();
   TelnetServer_Setup();
-  mDNS_Setup();
   LCD_Setup();
   Modbus_Registers_Create();
   FileSystem_SystemLogCreate();
@@ -2102,15 +2116,18 @@ void setup()
   WebServer_Setup();
   StartupPrinting_Setup();
   Tasks_Enable_Setup();
+  mDNS_Setup();
   Debug.println(F("Starting..."));
 }
 //************************************************************************************
 void mDNS_Setup()
 {
-  if (!MDNS.begin("esp8266")) {
+
+  if (!MDNS.begin("stat-basement")) {
     Serial.println(F("Error setting up MDNS responder!"));
   }
   else{
+    Serial.println("Started mDNS service....");
     MDNS.addService("http", "tcp", 80);
   }
 }
@@ -2767,11 +2784,11 @@ void TimeSync_Setup()
 void TelnetServer_Setup()
 {
   Serial.println(F("Setting up Telnet Server..."));
-  Debug.begin("esp195", 1);                                   // Initiaze the telnet server - HOST_NAME is the
+
+  Debug.begin("statbasement", 1);                                   // Initiaze the telnet server - HOST_NAME is the
                                                               //used in MDNS.begin and set the initial Serial level
-  Debug.setResetCmdEnabled(true);                             // Setup after Serial.begin
   Debug.setSerialEnabled(false);                              // All messages too send to serial too, and can be see
-                                                              // in serial monitor
+  Debug.setResetCmdEnabled(true);                             // Setup after Serial.begin
   Debug.setCallBackProjectCmds(&TelnetServer_ProcessCommand); //callback function!!!!!
 }
 //************************************************************************************

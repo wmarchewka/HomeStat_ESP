@@ -142,6 +142,7 @@ word glb_wifiNotConnectedCounter = 0;
 bool glb_logDataDebug = false;
 bool glb_DHT11debugOn = false;
 bool glb_OTA_Started = false;
+bool glb_tstatDebugOn = false;
 int glb_dataServerCounter = 0;
 String glb_TimeLong = "";
 String glb_TimeShort = "";
@@ -163,6 +164,7 @@ const char* host = "script.google.com";
 const char* googleRedirHost = "script.googleusercontent.com";
 const char* GScriptId = "AKfycbzDdjsWgX7WhfSuShcVs8qzJUPmSERMQtKJzux45wgXhkLyEmGn";
 String url = String("/macros/s/") + GScriptId + "/exec?";
+int glb_heatRunTimeTotal = 0;
 
 //function declarations
 void ChipID_Acquire();
