@@ -157,14 +157,12 @@ String glb_BootTime = "";
 int glb_dataLogCount = 0;
 long glb_wifiRSSI = 0;
 int glb_TaskTimes[30];
-String glb_testLED = "";
-String googleScript="https://script.google.com/macros/s/AKfycbzDdjsWgX7WhfSuShcVs8qzJUPmSERMQtKJzux45wgXhkLyEmGn/exec";
-const int httpsPort = 443;
-const char* host = "script.google.com";
-const char* googleRedirHost = "script.googleusercontent.com";
-const char* GScriptId = "AKfycbzDdjsWgX7WhfSuShcVs8qzJUPmSERMQtKJzux45wgXhkLyEmGn";
-String url = String("/macros/s/") + GScriptId + "/exec?";
 int glb_heatRunTimeTotal = 0;
+const int channelID = 454798;
+String writeAPIKey = "HT0YLEIX7AZCO4UB"; // write API key for your ThingSpeak Channel
+const char* thingSpeakServer = "api.thingspeak.com";
+String glb_testLED = "";
+
 
 //function declarations
 void ChipID_Acquire();
@@ -242,6 +240,6 @@ void Modbus_CreateTCP();
 void saveConfigCallback();
 void FileSystem_SystemDataSave(String);
 void FileSystem_SystemLogCreate();
-bool postData(String , float );
+bool postData();
 
 #endif

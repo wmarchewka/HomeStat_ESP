@@ -25,7 +25,6 @@
 #include <Wire.h>
 #include "SPI.h"
 #include "Free_Fonts.h"
-//#include "EspSaveCrash.h"
 #include "Esp.h"
 #include <Time.h>
 #include "build_defs.h"
@@ -34,8 +33,9 @@
 #include <RemoteDebug.h>
 #include "tester.h"
 #include <WiFiManager.h>
-#include "HTTPSRedirect.h"
-#include "DebugMacros.h"
+#include "EspSaveCrash.h"
+//#include <ThingSpeak.h>
+
 
 //classes
 ModbusIP mb; //ModbusIP object
@@ -49,7 +49,8 @@ IPAddress glb_ipAddress;
 RemoteDebug Debug;
 File fsUploadFile;
 WiFiManager wifiManager;
-HTTPSRedirect client(httpsPort);
+WiFiClient thingSpeak;
+
 
 Task taskModbusReadData_1(30, TASK_FOREVER, &Modbus_ReadData, NULL);
 Task taskDHT11Temp_2(2000, TASK_FOREVER, &DHT11_TempHumidity, NULL);
@@ -72,30 +73,30 @@ Task taskOTA_Update_18(100, TASK_FOREVER, &OTA_Update, NULL);
 Task taskLogDataSave_19(60000, TASK_FOREVER, &FileSystem_DataLogSave, NULL);
 Task taskLCDUpdate_20(1000, TASK_FOREVER, &LCD_Update, NULL);
 //************************************************************************************
-bool postData(String tag, float value){
+bool postData(){
 
-    //client.connect(host, httpsPort);
-    client.setPrintResponseBody(true);
-    client.setContentTypeHeader("application/json");
-    String payload_base =  "{\"command\": \"appendRow\", \
-                        \"sheet_name\": \"Sheet1\", \
-                        \"values\": ";
-    String free_heap_before = "111";
-    String free_stack_before = "222";
-    String payload = "";
-    payload = payload_base + "\"" + free_heap_before + "," + free_stack_before + "\"}";
+  if (thingSpeak.connect(thingSpeakServer, 80)) {
+    String body = "field1=";
+    body += String(glb_temperature);
+    // body += String("field2=");
+    // body += String(glb_humidity);
+    // body += String("field3=");
+    // body += String(glb_lightSensor);
 
-    tag = "test";
-    value = 72.1;
-    String urlFinal = url + "tag=" + tag + "&value=" + String(value);
-    Serial.println(urlFinal);
-    Serial.println(host);
-    Serial.println(googleRedirHost);
+    Serial.print(body);
 
-    client.connect(host, httpsPort);
-    client.POST(urlFinal, host, payload, false);
+    thingSpeak.println("POST /update HTTP/1.1");
+    thingSpeak.println("Host: api.thingspeak.com");
+    thingSpeak.println("User-Agent: ESP8266 (nothans)/1.0");
+    thingSpeak.println("Connection: close");
+    thingSpeak.println("X-THINGSPEAKAPIKEY: " + writeAPIKey);
+    thingSpeak.println("Content-Type: application/x-www-form-urlencoded");
+    thingSpeak.println("Content-Length: " + body.length());
+    thingSpeak.println("");
+    thingSpeak.print(body);
 
     return true;
+  }
 }
 //************************************************************************************
 void LCD_Update()
@@ -149,7 +150,7 @@ void TelnetServer_ProcessCommand()
   }
   else if (lastCmd == (F("post data")))
   {
-    bool ret = postData("Temperature", 72.1);
+    bool ret = postData();
     Debug.println(ret);
 
   }
@@ -2033,7 +2034,7 @@ String xmlResponse()
 void WebServer_HandleInformation()
 {
   bool debug = 1;
-  if (debug) Serial.println(F("Handle webserver debug data"));
+  if (debug) Serial.println(F("Handle webserver information"));
 
   String page = (F("<html lang=en><head>"));
   page += (F("<title>Home Stat</title>"));
