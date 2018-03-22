@@ -34,7 +34,7 @@
 #include "tester.h"
 #include <WiFiManager.h>
 #include "EspSaveCrash.h"
-//#include <ThingSpeak.h>
+#include <ThingSpeak.h>
 
 
 //classes
@@ -49,7 +49,7 @@ IPAddress glb_ipAddress;
 RemoteDebug Debug;
 File fsUploadFile;
 WiFiManager wifiManager;
-WiFiClient thingSpeak;
+WiFiClient thingSpeakClient;
 
 
 Task taskModbusReadData_1(30, TASK_FOREVER, &Modbus_ReadData, NULL);
@@ -72,31 +72,22 @@ Task taskModbusClientSend_17(5000, TASK_FOREVER, &Modbus_Client_Send, NULL);
 Task taskOTA_Update_18(100, TASK_FOREVER, &OTA_Update, NULL);
 Task taskLogDataSave_19(60000, TASK_FOREVER, &FileSystem_DataLogSave, NULL);
 Task taskLCDUpdate_20(1000, TASK_FOREVER, &LCD_Update, NULL);
+Task taskPostData_21(60000, TASK_FOREVER, &postData, NULL);
 //************************************************************************************
-bool postData(){
+void postData()
+{
+  bool debug = 1;
 
-  if (thingSpeak.connect(thingSpeakServer, 80)) {
-    String body = "field1=";
-    body += String(glb_temperature);
-    // body += String("field2=");
-    // body += String(glb_humidity);
-    // body += String("field3=");
-    // body += String(glb_lightSensor);
+  ThingSpeak.setField( ts_temperature, glb_temperature );
+  ThingSpeak.setField( ts_humidity, glb_humidity );
+  ThingSpeak.setField( ts_lightsensor, glb_lightSensor );
+  ThingSpeak.setField( ts_heatcall, glb_heatcall );
+  ThingSpeak.setField( ts_coolcall, glb_coolcall );
+  ThingSpeak.setField( ts_fancall, glb_fancall );
+  int writeSuccess = ThingSpeak.writeFields( channelID, writeAPIKey );
+  ErrorLogData_Save("Sending data to ThingSpeak");
+  if (debug) Serial.println("Sending data to ThingSpeak...");
 
-    Serial.print(body);
-
-    thingSpeak.println("POST /update HTTP/1.1");
-    thingSpeak.println("Host: api.thingspeak.com");
-    thingSpeak.println("User-Agent: ESP8266 (nothans)/1.0");
-    thingSpeak.println("Connection: close");
-    thingSpeak.println("X-THINGSPEAKAPIKEY: " + writeAPIKey);
-    thingSpeak.println("Content-Type: application/x-www-form-urlencoded");
-    thingSpeak.println("Content-Length: " + body.length());
-    thingSpeak.println("");
-    thingSpeak.print(body);
-
-    return true;
-  }
 }
 //************************************************************************************
 void LCD_Update()
@@ -150,9 +141,8 @@ void TelnetServer_ProcessCommand()
   }
   else if (lastCmd == (F("post data")))
   {
-    bool ret = postData();
-    Debug.println(ret);
-
+    postData();
+    Debug.println("ok");
   }
   else if (lastCmd == (F("file list")))
   {
@@ -1341,12 +1331,14 @@ void Thermostat_Detect()
     mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL, COIL_ON);
     glb_heatRunTimeTotal++;
     if (hs==false) FileSystem_SystemDataSave(F("HEAT ON"));
+    glb_heatcall = true;
     hs = true;
   }
   else
   {
     mb.Coil(THERMOSTAT_HEAT_CALL_MB_COIL, COIL_OFF);
     if (hs==true) FileSystem_SystemDataSave(F("HEAT OFF"));
+    glb_heatcall = false;
     hs = false;
   }
   glb_heatPulseCounter = 0;
@@ -1355,12 +1347,14 @@ void Thermostat_Detect()
   {
     mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL, COIL_ON);
     if (cs==false) FileSystem_SystemDataSave(F("COOL ON"));
+    glb_coolcall = true;
     cs = true;
   }
   else
   {
     mb.Coil(THERMOSTAT_COOL_CALL_MB_COIL, COIL_OFF);
     if (cs==true) FileSystem_SystemDataSave(F("COOL OFF"));
+    glb_coolcall = false;
     cs = false;
   }
   glb_coolPulseCounter = 0;
@@ -1369,12 +1363,14 @@ void Thermostat_Detect()
   {
     mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL, COIL_ON);
     if (fs==false) FileSystem_SystemDataSave(F("FAN ON"));
+    glb_fancall = true;
     fs = true;
   }
   else
   {
     mb.Coil(THERMOSTAT_FAN_CALL_MB_COIL, COIL_OFF);
     if (fs==true) FileSystem_SystemDataSave(F("FAN OFF"));
+    glb_fancall = false;
     fs = false;
   }
   glb_fanPulseCounter = 0;
@@ -2113,12 +2109,19 @@ void setup()
   ChipID_Acquire();
   Thermostat_ControlDisable();
   TaskScheduler_Setup();
+  ThingSpeak_Setup();
   DataServer_Setup();
   WebServer_Setup();
   StartupPrinting_Setup();
   Tasks_Enable_Setup();
   mDNS_Setup();
   Debug.println(F("Starting..."));
+}
+//************************************************************************************
+void ThingSpeak_Setup()
+{
+  ThingSpeak.begin( thingSpeakClient );
+  Serial.print("Creating ThingSpeak client...");
 }
 //************************************************************************************
 void mDNS_Setup()
@@ -2584,6 +2587,7 @@ void Tasks_Enable_Setup()
   taskOTA_Update_18.enable();
   taskLogDataSave_19.enable();
   taskLCDUpdate_20.enable();
+  taskPostData_21.enable();
 
   if (taskModbusReadData_1.isEnabled())
   {
@@ -2703,7 +2707,11 @@ void Tasks_Enable_Setup()
     Serial.println(F("Enabling task taskLCDUpdate_20..."));
     taskLCDUpdate_20.setId(20);
   }
-
+  if (taskPostData_21.isEnabled())
+  {
+    Serial.println(F("Enabling task taskPostData_21..."));
+    taskPostData_21.setId(21);
+  }
 }
 //************************************************************************************
 void TaskScheduler_Setup()
@@ -2731,6 +2739,8 @@ void TaskScheduler_Setup()
   runner.addTask(taskOTA_Update_18);
   runner.addTask(taskLogDataSave_19);
   runner.addTask(taskLCDUpdate_20);
+  runner.addTask(taskPostData_21);
+
 }
 
 //************************************************************************************

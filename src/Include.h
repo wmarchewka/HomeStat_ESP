@@ -158,10 +158,20 @@ int glb_dataLogCount = 0;
 long glb_wifiRSSI = 0;
 int glb_TaskTimes[30];
 int glb_heatRunTimeTotal = 0;
-const int channelID = 454798;
-String writeAPIKey = "HT0YLEIX7AZCO4UB"; // write API key for your ThingSpeak Channel
-const char* thingSpeakServer = "api.thingspeak.com";
 String glb_testLED = "";
+char thingSpeakAddress[] = "api.thingspeak.com";
+unsigned long channelID = 454798;
+const char* readAPIKey = "XXXXXXXXXXXXXXXX";
+const char* writeAPIKey = "HT0YLEIX7AZCO4UB";
+const unsigned int ts_temperature = 1;                            // Field to write temperature data
+const unsigned int ts_humidity = 2;                       // Field to write temperature data
+const unsigned int ts_lightsensor = 3;                     // Field to write elapsed time data
+const unsigned int ts_heatcall = 4;                     // Field to write elapsed time data
+const unsigned int ts_coolcall = 5;                     // Field to write elapsed time data
+const unsigned int ts_fancall = 6;                     // Field to write elapsed time data
+bool glb_heatcall = false;
+bool glb_coolcall = false;
+bool glb_fancall = false;
 
 
 //function declarations
@@ -240,6 +250,8 @@ void Modbus_CreateTCP();
 void saveConfigCallback();
 void FileSystem_SystemDataSave(String);
 void FileSystem_SystemLogCreate();
-bool postData();
+void postData();
+void ThingSpeak_Setup();
+
 
 #endif
