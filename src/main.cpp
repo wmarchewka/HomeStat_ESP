@@ -3,8 +3,8 @@
 #define _TASK_WDT_IDS
 #define _TASK_PRIORITY
 #define _TASK_STATUS_REQUEST
-#define HTTP_WEBSERVER_PORT 80
-#define DATASERVER_PORT 1504
+#define HTTP_WEBSERVER_PORT   80
+#define DATASERVER_PORT       1504
 #define DEBUG_ESP_OTA
 
 #include "ModbusIP_ESP8266.h"
@@ -31,25 +31,21 @@
 #include "FS.h"
 #include <ESP8266FtpServer.h>
 #include <RemoteDebug.h>
-#include "tester.h"
 #include <WiFiManager.h>
-#include "EspSaveCrash.h"
 #include <ThingSpeak.h>
 
 
 //classes
-ModbusIP mb; //ModbusIP object
-DHT dht;
-Adafruit_MCP23017 mcp;
-TFT_eSPI tft = TFT_eSPI();
-Scheduler runner;
-ESP8266WebServer webServer(HTTP_WEBSERVER_PORT);
-WiFiServer DataServer(DATASERVER_PORT);
-IPAddress glb_ipAddress;
-RemoteDebug Debug;
-File fsUploadFile;
-WiFiManager wifiManager;
-WiFiClient thingSpeakClient;
+ModbusIP mb;                               //ModbusIP object
+DHT dht;                                                    //temperature humidity
+Adafruit_MCP23017 mcp;                                      //io expander
+TFT_eSPI tft = TFT_eSPI();                                  //lcd
+Scheduler runner;                                           //task schedule
+ESP8266WebServer webServer(HTTP_WEBSERVER_PORT);            //webserver
+WiFiServer DataServer(DATASERVER_PORT);                     //wifi server
+RemoteDebug Debug;                                          //telnet debug
+WiFiManager wifiManager;                                    //wifi manager
+WiFiClient thingSpeakClient;                                //thingsspeak
 
 
 Task taskModbusReadData_1(30, TASK_FOREVER, &Modbus_ReadData, NULL);
@@ -76,18 +72,19 @@ Task taskPostData_21(60000, TASK_FOREVER, &postData, NULL);
 //************************************************************************************
 void postData()
 {
-  bool debug = 1;
-
-  ThingSpeak.setField( ts_temperature, glb_temperature );
-  ThingSpeak.setField( ts_humidity, glb_humidity );
-  ThingSpeak.setField( ts_lightsensor, glb_lightSensor );
-  ThingSpeak.setField( ts_heatcall, glb_heatcall );
-  ThingSpeak.setField( ts_coolcall, glb_coolcall );
-  ThingSpeak.setField( ts_fancall, glb_fancall );
-  int writeSuccess = ThingSpeak.writeFields( channelID, writeAPIKey );
-  ErrorLogData_Save("Sending data to ThingSpeak");
-  if (debug) Serial.println("Sending data to ThingSpeak...");
-
+  if (glb_WiFiStatus == WL_CONNECTED)
+  {
+    bool debug = 0;
+    ThingSpeak.setField( ts_temperature, glb_temperature );
+    ThingSpeak.setField( ts_humidity, glb_humidity );
+    ThingSpeak.setField( ts_lightsensor, glb_lightSensor );
+    ThingSpeak.setField( ts_heatcall, glb_heatcall );
+    ThingSpeak.setField( ts_coolcall, glb_coolcall );
+    ThingSpeak.setField( ts_fancall, glb_fancall );
+    int writeSuccess = ThingSpeak.writeFields( glb_ThingSpeakChannel, writeAPIKey );
+    ErrorLogData_Save("Sending data to ThingSpeak");
+    if (debug) Serial.println("Sending data to ThingSpeak...");
+  }
 }
 //************************************************************************************
 void LCD_Update()
@@ -115,12 +112,12 @@ void LCD_Update()
 //************************************************************************************
 void TelnetServer_Process()
 {
-  int startTimeMicros = micros();
-  int endTimeMicros = 0;
-  Debug.handle();
-  endTimeMicros = micros();
-  endTimeMicros = endTimeMicros - startTimeMicros;
-  glb_TaskTimes[8] = endTimeMicros;
+    int startTimeMicros = micros();
+    int endTimeMicros = 0;
+    Debug.handle();
+    endTimeMicros = micros();
+    endTimeMicros = endTimeMicros - startTimeMicros;
+    glb_TaskTimes[8] = endTimeMicros;
 }
 //************************************************************************************
 void TelnetServer_ProcessCommand()
@@ -128,6 +125,7 @@ void TelnetServer_ProcessCommand()
   char tmpglb_SSID[32];
   char tmpglb_SSIDpassword[32];
   char tmpLastCmd[32];
+
 
   String lastCmd = Debug.getLastCommand();
 
@@ -843,163 +841,172 @@ void OTA_Update()
 void Modbus_ReadData()
 {
   bool debug = 0;
-  if (debug)
-    Debug.println(F("Modbus Routine"));
+  if (debug) Debug.println(F("Modbus Routine"));
 
-  word returnValue = 0;
-  int startTimeMicros = micros();
-  int endTimeMicros = 0;
-
-  static word taskMbStartDelayCounter = 0;
-  static word taskMbOverrunPosCounter = 0;
-  static word taskMbOverrunNegCounter = 0;
-  static word noClientCounter = 0;
-  static word goodPacketCounter = 0;
-  static word badPacketCounter = 0;
-  static word notModbusPacketCounter = 0;
-  static word largeFrameCounter = 0;
-  static word failedWriteCounter = 0;
-
-  returnValue = mb.task();
-
-  if (debug)
+  if (glb_WiFiStatus == WL_CONNECTED)
   {
-    if (returnValue != 1)
-      Debug.println(returnValue);
-  }
 
-  if (taskModbusReadData_1.getStartDelay() > 0)
-  {
-    taskMbStartDelayCounter++;
-    mb.Hreg(MB_START_DELAY_COUNTER_MB_REG, (word)taskMbStartDelayCounter);
-  }
+    word returnValue = 0;
+    int startTimeMicros = micros();
+    int endTimeMicros = 0;
 
-  if (taskModbusReadData_1.getOverrun() < 0)
-  {
-    taskMbOverrunNegCounter++;
-    mb.Hreg(MB_OVERRUN_NEG_COUNTER_MB_REG, (word)taskMbOverrunNegCounter);
-  }
+    static word taskMbStartDelayCounter = 0;
+    static word taskMbOverrunPosCounter = 0;
+    static word taskMbOverrunNegCounter = 0;
+    static word noClientCounter = 0;
+    static word goodPacketCounter = 0;
+    static word badPacketCounter = 0;
+    static word notModbusPacketCounter = 0;
+    static word largeFrameCounter = 0;
+    static word failedWriteCounter = 0;
 
-  if (taskModbusReadData_1.getOverrun() > 0)
-  {
-    taskMbOverrunPosCounter++;
-    mb.Hreg(MB_OVERRUN_POS_COUNTER_MB_REG, (word)taskMbOverrunPosCounter);
-  }
+    returnValue = mb.task();
 
-  if (returnValue == 0)
-  { //NO_CLIENT
-    noClientCounter++;
-    mb.Hreg(NO_CLIENT_COUNTER_MB_REG, (word)noClientCounter);
-  }
-  if (returnValue == 1)
-  { //GOOD_PACKET_COUNTER
-    goodPacketCounter++;
-    mb.Hreg(GOOD_PACKET_COUNTER_MB_REG, (word)goodPacketCounter);
-  }
-  if (returnValue == 2)
-  { //BAD_PACKET_COUNTER
-    badPacketCounter++;
-    mb.Hreg(BAD_PACKET_COUNTER_MB_REG, (word)badPacketCounter);
-  }
-  if (returnValue == 3)
-  { //NOT_MODBUS_PKT
-    notModbusPacketCounter++;
-    mb.Hreg(NOT_MODBUS_PACKET_COUNTER_MB_REG, (word)notModbusPacketCounter);
-  }
-  if (returnValue == 4)
-  { //LARGE_FRAME
-    largeFrameCounter++;
-    mb.Hreg(LARGE_FRAME_COUNTER_MB_REG, (word)largeFrameCounter);
-  }
-  if (returnValue == 5)
-  { //FAILED_WRITE
-    failedWriteCounter++;
-    mb.Hreg(FAILED_WRITE_COUNTER_MB_REG, (word)failedWriteCounter);
-  }
+    if (debug)
+    {
+      if (returnValue != 1)
+        Debug.println(returnValue);
+    }
 
-  endTimeMicros = micros();
-  endTimeMicros = endTimeMicros - startTimeMicros;
-  mb.Hreg(MB_ROUTINE_TIME_MB_HREG, int((word)endTimeMicros));
-  glb_TaskTimes[1] = endTimeMicros;
+    if (taskModbusReadData_1.getStartDelay() > 0)
+    {
+      taskMbStartDelayCounter++;
+      mb.Hreg(MB_START_DELAY_COUNTER_MB_REG, (word)taskMbStartDelayCounter);
+    }
+
+    if (taskModbusReadData_1.getOverrun() < 0)
+    {
+      taskMbOverrunNegCounter++;
+      mb.Hreg(MB_OVERRUN_NEG_COUNTER_MB_REG, (word)taskMbOverrunNegCounter);
+    }
+
+    if (taskModbusReadData_1.getOverrun() > 0)
+    {
+      taskMbOverrunPosCounter++;
+      mb.Hreg(MB_OVERRUN_POS_COUNTER_MB_REG, (word)taskMbOverrunPosCounter);
+    }
+
+    if (returnValue == 0)
+    { //NO_CLIENT
+      noClientCounter++;
+      mb.Hreg(NO_CLIENT_COUNTER_MB_REG, (word)noClientCounter);
+    }
+    if (returnValue == 1)
+    { //GOOD_PACKET_COUNTER
+      goodPacketCounter++;
+      mb.Hreg(GOOD_PACKET_COUNTER_MB_REG, (word)goodPacketCounter);
+    }
+    if (returnValue == 2)
+    { //BAD_PACKET_COUNTER
+      badPacketCounter++;
+      mb.Hreg(BAD_PACKET_COUNTER_MB_REG, (word)badPacketCounter);
+    }
+    if (returnValue == 3)
+    { //NOT_MODBUS_PKT
+      notModbusPacketCounter++;
+      mb.Hreg(NOT_MODBUS_PACKET_COUNTER_MB_REG, (word)notModbusPacketCounter);
+    }
+    if (returnValue == 4)
+    { //LARGE_FRAME
+      largeFrameCounter++;
+      mb.Hreg(LARGE_FRAME_COUNTER_MB_REG, (word)largeFrameCounter);
+    }
+    if (returnValue == 5)
+    { //FAILED_WRITE
+      failedWriteCounter++;
+      mb.Hreg(FAILED_WRITE_COUNTER_MB_REG, (word)failedWriteCounter);
+    }
+
+    endTimeMicros = micros();
+    endTimeMicros = endTimeMicros - startTimeMicros;
+    mb.Hreg(MB_ROUTINE_TIME_MB_HREG, int((word)endTimeMicros));
+    glb_TaskTimes[1] = endTimeMicros;
+  }
 }
 //************************************************************************************
 void TimeRoutine()
 {
-  bool debug = 0;
-  int startTimeMicros = micros();
-  int static secondsCounter = 0;
-  unsigned long start = millis();
-  unsigned long timeout = 1000;
-  static bool firstRun = true;
-  struct tm *timeinfo;
-  static time_t now;
-  time_t tmpNow;
-
-  if (debug) Serial.println(F("Time Routine"));
-  if (debug) Serial.println(F("Waiting for time from time sync"));
-
-  configTime(-4 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-
-  secondsCounter++;
-  now++;
-
-  if (firstRun) timeout = 5000;
-
-  if (debug) Serial.print(F("seconds:"));
-  if (debug) Serial.println(secondsCounter);
-  if (debug) Serial.print(F("firstRun:"));
-  if (debug) Serial.println(firstRun);
-
-  if (secondsCounter >= 300 || (firstRun))
+  if (glb_WiFiStatus == WL_CONNECTED)
   {
-    while ( millis() < (timeout + start) )
+    bool debug = 0;
+    int startTimeMicros = micros();
+    int static secondsCounter = 0;
+    unsigned long start = millis();
+    unsigned long timeout = 1000;
+    static bool firstRun = true;
+    struct tm *timeinfo;
+    static time_t now;
+    time_t tmpNow;
+
+    if (debug) Serial.println(F("Time Routine"));
+    if (debug) Serial.println(F("Waiting for time from time sync"));
+    if (firstRun) Serial.println(F("Waiting for time from time sync"));
+
+    configTime(-4 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+
+    secondsCounter++;
+    now++;
+
+    if (firstRun) timeout = 5000;
+
+    if (debug) Serial.print(F("seconds:"));
+    if (debug) Serial.println(secondsCounter);
+    if (debug) Serial.print(F("firstRun:"));
+    if (debug) Serial.println(firstRun);
+
+    if (secondsCounter >= 300 || (firstRun))
     {
-      tmpNow = time(nullptr);
-      if (tmpNow != 0)
+      while ( millis() < (timeout + start) )
       {
-        firstRun = false;
-        secondsCounter = 0;
-        now = tmpNow;
-        Serial.print("Got time from timeserver : ");
-        Serial.print(ctime(&now));
-        break;
+        tmpNow = time(nullptr);
+        if (tmpNow != 0)
+        {
+          firstRun = false;
+          secondsCounter = 0;
+          now = tmpNow;
+          if (debug) Serial.print("Got time from timeserver : ");
+          if (debug) Serial.print(ctime(&now));
+          if (firstRun) Serial.print("Got time from timeserver : ");
+          if (firstRun) Serial.print(ctime(&now));
+          break;
+        }
+        delay(10);
       }
-      delay(10);
     }
-  }
 
-  //Serial.println(F("No NTP update"));
+    //Serial.println(F("No NTP update"));
 
 
-  if (debug) Serial.print(F("now2:"));
-  if (debug) Serial.println(now);
+    if (debug) Serial.print(F("now2:"));
+    if (debug) Serial.println(now);
 
-  if (debug) Serial.print(F("&now:"));
-  if (debug) Serial.print(ctime(&now));
+    if (debug) Serial.print(F("&now:"));
+    if (debug) Serial.print(ctime(&now));
 
-  timeinfo = localtime(&now);
-  glb_TimeLong = ctime(&now);
-  glb_TimeLong.trim();
-  glb_timeHour = String(timeinfo->tm_hour);
-  glb_timeMin = String(timeinfo->tm_min);
-  glb_timeSec = String(timeinfo->tm_sec);
-  glb_timeMonth = String(timeinfo->tm_mon);
-  glb_timeDay = String(timeinfo->tm_mday);
-  glb_timeYear = String((timeinfo->tm_year) - 100);
-  glb_timeWeekDay = String(timeinfo->tm_wday);
-  glb_TimeShort = String(glb_timeHour) + ":" + String(glb_timeMin) + ":" + String(glb_timeSec);
+    timeinfo = localtime(&now);
+    glb_TimeLong = ctime(&now);
+    glb_TimeLong.trim();
+    glb_timeHour = String(timeinfo->tm_hour);
+    glb_timeMin = String(timeinfo->tm_min);
+    glb_timeSec = String(timeinfo->tm_sec);
+    glb_timeMonth = String(timeinfo->tm_mon);
+    glb_timeDay = String(timeinfo->tm_mday);
+    glb_timeYear = String((timeinfo->tm_year) - 100);
+    glb_timeWeekDay = String(timeinfo->tm_wday);
+    glb_TimeShort = String(glb_timeHour) + ":" + String(glb_timeMin) + ":" + String(glb_timeSec);
 
-  mb.Hreg(TIME_HH_MB_HREG, glb_timeHour.toInt());
-  mb.Hreg(TIME_MM_MB_HREG, glb_timeMin.toInt());
-  mb.Hreg(TIME_SS_MB_HREG, glb_timeSec.toInt());
-  int endTimeMicros = micros();
-  endTimeMicros = endTimeMicros - startTimeMicros;
-  mb.Hreg(NTP_LOOP_TIME_MB_HREG, (word)endTimeMicros);
-  glb_TaskTimes[3] = endTimeMicros;
-  if (endTimeMicros > 100000)
-  {
-    if (debug) Serial.print(F("Time went long:"));
-    if (debug) Serial.println(endTimeMicros);
+    mb.Hreg(TIME_HH_MB_HREG, glb_timeHour.toInt());
+    mb.Hreg(TIME_MM_MB_HREG, glb_timeMin.toInt());
+    mb.Hreg(TIME_SS_MB_HREG, glb_timeSec.toInt());
+    int endTimeMicros = micros();
+    endTimeMicros = endTimeMicros - startTimeMicros;
+    mb.Hreg(NTP_LOOP_TIME_MB_HREG, (word)endTimeMicros);
+    glb_TaskTimes[3] = endTimeMicros;
+    if (endTimeMicros > 100000)
+    {
+      if (debug) Serial.print(F("Time went long:"));
+      if (debug) Serial.println(endTimeMicros);
+    }
   }
 }
 //************************************************************************************
@@ -1225,7 +1232,7 @@ void LED_Error()
 bool LED_OnEnable()
 {
 
-  int interval = 500;
+  int interval = 250;
   int startTimeMicros = micros();
   int endTimeMicros = 0;
   bool debug = 0;
@@ -1537,6 +1544,8 @@ void Wifi_CheckStatus()
       glb_wifiNotConnectedCounter++;
       Serial.setDebugOutput(false);
       mb.Hreg(WIFI_NOT_CONNECTED_MB_HREG, (word)glb_wifiNotConnectedCounter);
+      //check to see if servers and clients are still running?
+      webServer.begin();
     }
   }
 
@@ -1746,20 +1755,27 @@ void Modbus_Client_Send()
   int startTimeMicros = micros();
   int endTimeMicros = 0;
 
-  WiFiClient modbusClient;
-  Serial.println(F("Sending"));
-  modbusClient.connect("10.0.0.11", 5502);
-  modbusClient.print(glb_temperature);
-  modbusClient.print(glb_humidity);
+  if (glb_WiFiStatus == WL_CONNECTED)
+  {
 
-  endTimeMicros = micros();
-  endTimeMicros = endTimeMicros - startTimeMicros;
-  glb_TaskTimes[17] = endTimeMicros;
+    WiFiClient modbusClient;
+    Serial.println(F("Sending"));
+    modbusClient.connect("10.0.0.11", 5502);
+    modbusClient.print(glb_temperature);
+    modbusClient.print(glb_humidity);
+
+    endTimeMicros = micros();
+    endTimeMicros = endTimeMicros - startTimeMicros;
+    glb_TaskTimes[17] = endTimeMicros;
+  }
 }
 //************************************************************************************
 void WebServer_Process()
 {
-  webServer.handleClient();
+  if (glb_WiFiStatus == WL_CONNECTED)
+  {
+    webServer.handleClient();
+  }
 }
 //************************************************************************************
 void WebServer_HandleRoot()
@@ -1945,7 +1961,7 @@ void WebServer_HandleFileUpload()
 void WebServer_HandleTest()
 {
   ;
-  webServer.send_P(200, "text/html", testpage);
+  //webServer.send_P(200, "text/html", testpage);
   // String page = "<!DOCTYPE html>";
   // page += "<html>";
   // page += "<body>";
@@ -2081,53 +2097,74 @@ void WebServer_HandleNotFound()
 //************************************************************************************
 void setup()
 {
+  //SET UP AS CONTROLLER OR SENSOR
+  glb_tempController = true;
   Serial.begin(115200);
   Serial.println();
   Serial.print(F("Free RAM "));
   glb_freeHeap = ESP.getFreeHeap();
   Serial.println(glb_freeHeap);
-  Serial.println(F("Booting ESP8266"));
-  ErrorLogData_Save(F("Booting ESP8266"));
   ErrorLog_Create();
+  ThermostatMode_Setup();
   EEPROM_Setup();
-  EEPROM_LoadSettings();
+  if (glb_tempController) EEPROM_LoadSettings();
   WiFiManager_Setup();
-  //Wifi_Setup();     //taken over by WiFiManager
-  TimeSync_Setup();
+  if (glb_tempController) TimeSync_Setup();
   TelnetServer_Setup();
-  LCD_Setup();
-  Modbus_Registers_Create();
-  FileSystem_SystemLogCreate();
+  if (glb_tempController) LCD_Setup();
+  if (glb_tempController) Modbus_Registers_Create();
+  if (glb_tempController) FileSystem_SystemLogCreate();
   FileSystem_DataLogCreate();
-  FileSystem_DebugLogCreate();
-  I2C_Setup();
-  IO_Pins_Setup();
-  selftestMcp();
+  if (glb_tempController) FileSystem_DebugLogCreate();
+  if (glb_tempController) I2C_Setup();
+  if (glb_tempController) IO_Pins_Setup();
+  if (glb_tempController) selftestMcp();
   DHT11_Sensor_Setup();
   OTA_Setup();
-  Modbus_Registers_UpdateOnStart();
-  ChipID_Acquire();
-  Thermostat_ControlDisable();
+  if (glb_tempController) Modbus_Registers_Setup();
+  if (glb_tempController) Thermostat_ControlDisable();
   TaskScheduler_Setup();
   ThingSpeak_Setup();
-  DataServer_Setup();
-  WebServer_Setup();
+  if (glb_tempController) DataServer_Setup();
+  if (glb_tempController) WebServer_Setup();
   StartupPrinting_Setup();
   Tasks_Enable_Setup();
   mDNS_Setup();
   Debug.println(F("Starting..."));
 }
 //************************************************************************************
+void ThermostatMode_Setup()
+{
+  Serial.println("Starting temperature mode setup");
+
+  if (glb_tempController)
+  {
+    Serial.println(F("Booting ESP8266 as Temperature Controller"));
+    ErrorLogData_Save(F("Booting ESP8266 as Temperature Controller"));
+    glb_mdnsName = "stat-basement";
+    glb_ThingSpeakChannel = 454798;
+  }
+  else
+  {
+    Serial.println(F("Booting ESP8266 as Temperature sensor"));
+    ErrorLogData_Save(F("Booting ESP8266  as Temperature sensor"));
+    glb_mdnsName = "stat-morningroom";
+    glb_ThingSpeakChannel = 456295;
+  }
+}
+//************************************************************************************
 void ThingSpeak_Setup()
 {
   ThingSpeak.begin( thingSpeakClient );
-  Serial.print("Creating ThingSpeak client...");
+  Serial.print("Creating ThingSpeak client using channel number :");
+  Serial.println(glb_ThingSpeakChannel);
+
 }
 //************************************************************************************
 void mDNS_Setup()
 {
 
-  if (!MDNS.begin("stat-basement")) {
+  if (!MDNS.begin(glb_mdnsName)) {
     Serial.println(F("Error setting up MDNS responder!"));
   }
   else{
@@ -2138,60 +2175,9 @@ void mDNS_Setup()
 //************************************************************************************
 void EEPROM_LoadSettings()
 {
-
   Serial.println(F("Loading settings from EEPROM.."));
   //wifi ssid and password are stord in the wifi manager Library
-
-
-  // int i = 0;
-  //
-  // //strcpy(glb_SSID, glb_defaultSSID);
-  // //strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
-  // //EEPROM.put(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
-  // //EEPROM.put(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
-  // //EEPROM.commit();
-  //
-  // strcpy(glb_SSID, "");
-  // strcpy(glb_SSIDpassword, "");
-  //
-  // EEPROM.get(glb_eepromSettingsOffset + ES_SSID, glb_SSID);
-  // EEPROM.get(glb_eepromSettingsOffset + ES_SSIDPASSWORD, glb_SSIDpassword);
-  //
-  //
-  // //for(i=0;glb_SSID[i] != '\0';i++)
-  // for(i=0;i < 32;i++)
-  // {
-  //   Serial.print(i);Serial.print(":");Serial.print(glb_SSID[i]);Serial.print(":");
-  //   if ( (isAlphaNumeric(glb_SSID[i])) || (isPunct(glb_SSID[i])) )
-  //   {
-  //     Serial.println("ok");
-  //   }
-  //   else
-  //   {
-  //     strcpy(glb_SSID, glb_defaultSSID);
-  //     Serial.println(F("Using default SSID"));
-  //     break;
-  //   }
-  // }
-  //
-  // for(i=0;glb_SSIDpassword[i] != '\0';i++)
-  // {
-  //   //Serial.print(i);Serial.print(":");Serial.print(glb_SSIDpassword[i]);Serial.print(":");
-  //   if ( (isAlphaNumeric(glb_SSIDpassword[i])) || (isPunct(glb_SSIDpassword[i])) )
-  //   {
-  //     Serial.println("ok");
-  //   }
-  //   else
-  //   {
-  //     strcpy(glb_SSIDpassword, glb_defaultSSIDpassword);
-  //     Serial.println(F("Using default PASS"));
-  //     break;
-  //   }
-  // }
-
-
 }
-
 //************************************************************************************
 void Modbus_Registers_Create()
 {
@@ -2223,7 +2209,7 @@ void Modbus_Registers_Create()
 //************************************************************************************
 void LCD_Setup()
 {
-  Serial.println(F("Initialize display..."));
+  Serial.println(F("Initialize LCD display..."));
   tft.init();
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
@@ -2233,6 +2219,7 @@ void LCD_Setup()
 //************************************************************************************
 void StartupPrinting_Setup()
 {
+  ChipID_Acquire();
 
   int getBD = BootDevice_Detect();
   if (getBD == 1)
@@ -2280,6 +2267,7 @@ void Modbus_CreateTCP()
 void Wifi_Setup()
 {
 
+  //taken over by wifimanager
   Serial.println(F("Trying to connect to WiFI..."));
   //Serial.setDebugOutput(true);
   word wifiCounter = 0;
@@ -2413,8 +2401,7 @@ void FileSystem_DebugLogCreate()
 {
   bool debug = 0;
 
-  if (debug)
-    Serial.print(F("Creating Log File:"));
+  Serial.print(F("Creating Debug Log File:"));
 
   if (SPIFFS.begin())
   {
@@ -2436,6 +2423,8 @@ void FileSystem_DebugLogCreate()
   else
   {
     Serial.println(F("File not found error..."));
+    File f = SPIFFS.open(glb_dataLogPath, "w");
+    f.close();
   }
 }
 //************************************************************************************
@@ -2544,6 +2533,7 @@ void OTA_Setup()
 
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
     Serial.printf("Progress: %u%%\n", (progress / (total / 100)));
+    LCD_DrawText(0, 80, "OTA Update  :     " + String( progress / (total / 100)) + "%", TFT_WHITE, TFT_BLACK);
   });
 
   ArduinoOTA.onError([](ota_error_t error) {
@@ -2719,28 +2709,27 @@ void TaskScheduler_Setup()
   Serial.println(F("Adding Tasks to Scheduler..."));
 
   runner.init();
-  runner.addTask(taskModbusReadData_1);
+  if (glb_tempController) runner.addTask(taskModbusReadData_1);
   runner.addTask(taskDHT11Temp_2);
   runner.addTask(taskTimeRoutine_3);
-  runner.addTask(taskLED_Error_4);
-  runner.addTask(taskWifiCheckStatus_5);
-  runner.addTask(taskThermostatDetect_6);
-  runner.addTask(taskIoControlPins_7);
+  if (glb_tempController) runner.addTask(taskLED_Error_4);
+  if (glb_tempController) runner.addTask(taskWifiCheckStatus_5);
+  if (glb_tempController) runner.addTask(taskThermostatDetect_6);
+  if (glb_tempController) runner.addTask(taskIoControlPins_7);
   runner.addTask(taskTelnet_8);
-  runner.addTask(taskLED_onEnable_9);
-  runner.addTask(taskLED_OnDisable_10);
-  runner.addTask(taskErrorsCodesProcess_11);
-  runner.addTask(taskModbusProcess_12);
-  runner.addTask(taskEEpromProcess_13);
-  runner.addTask(taskMBcoilReg11_14);
-  runner.addTask(taskWebServer_Process_15);
-  runner.addTask(taskDataServer_Process_16);
-  runner.addTask(taskModbusClientSend_17);
+  if (glb_tempController) runner.addTask(taskLED_onEnable_9);
+  if (glb_tempController) runner.addTask(taskLED_OnDisable_10);
+  if (glb_tempController) runner.addTask(taskErrorsCodesProcess_11);
+  if (glb_tempController) runner.addTask(taskModbusProcess_12);
+  if (glb_tempController) runner.addTask(taskEEpromProcess_13);
+  if (glb_tempController) runner.addTask(taskMBcoilReg11_14);
+  if (glb_tempController) runner.addTask(taskWebServer_Process_15);
+  if (glb_tempController) runner.addTask(taskDataServer_Process_16);
+  if (glb_tempController) runner.addTask(taskModbusClientSend_17);
   runner.addTask(taskOTA_Update_18);
-  runner.addTask(taskLogDataSave_19);
-  runner.addTask(taskLCDUpdate_20);
+  if (glb_tempController) runner.addTask(taskLogDataSave_19);
+  if (glb_tempController) runner.addTask(taskLCDUpdate_20);
   runner.addTask(taskPostData_21);
-
 }
 
 //************************************************************************************
@@ -2776,14 +2765,16 @@ void Thermostat_ControlDisable()
   mb.Coil(FAN_CONTROL_MB_COIL, COIL_OFF);   //COIL 6
 }
 //************************************************************************************
-void Modbus_Registers_UpdateOnStart()
+void Modbus_Registers_Setup()
 {
-  //update registers with important data
+  Serial.print("Modbus registers setup...");
+//update registers with important data
   //mb.Hreg(ESP_RESET_REASON_MB_HREG, ESP.getResetReason());
 }
 //************************************************************************************
 void TimeSync_Setup()
 {
+  Serial.println("Starting time sync setup...");
   TimeRoutine();
   glb_BootTime = glb_TimeLong;
   String tmp = (F("Boot time:"));
@@ -2872,6 +2863,8 @@ void testMcpOutputPin(int pin, int value)
 //************************************************************************************
 void selftestMcp()
 {
+
+  Serial.print("Running extended IO self test...");
   for (int i =0; i < 8; i++){
     mcp.pinMode(i,OUTPUT);
     mcp.digitalWrite(i, HIGH);

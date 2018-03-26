@@ -129,6 +129,7 @@ word glb_eepromHregCopy[glb_maxHregSize] = { };
 bool glb_eepromCoilCopy[glb_maxCoilSize] = { };
 word glb_freeHeap = 0;
 int glb_lowMemory = 80000;
+IPAddress glb_ipAddress;                                    //ip address
 String glb_dhtStatusError = "";
 String glb_thermostatStatus = "";
 String glb_dataLogPath = "/datalog.csv";
@@ -137,6 +138,7 @@ String glb_debugLogPath = "/debuglog.txt";
 String glb_systemLogPath = "/systemlog.txt";
 File glb_temperatureLog;
 File glb_errorLog;
+File fsUploadFile;
 uint32_t glb_resetCounter = 0;
 word glb_wifiNotConnectedCounter = 0;
 bool glb_logDataDebug = false;
@@ -160,7 +162,6 @@ int glb_TaskTimes[30];
 int glb_heatRunTimeTotal = 0;
 String glb_testLED = "";
 char thingSpeakAddress[] = "api.thingspeak.com";
-unsigned long channelID = 454798;
 const char* readAPIKey = "XXXXXXXXXXXXXXXX";
 const char* writeAPIKey = "HT0YLEIX7AZCO4UB";
 const unsigned int ts_temperature = 1;                            // Field to write temperature data
@@ -172,6 +173,9 @@ const unsigned int ts_fancall = 6;                     // Field to write elapsed
 bool glb_heatcall = false;
 bool glb_coolcall = false;
 bool glb_fancall = false;
+bool glb_tempController = false;
+const char* glb_mdnsName = "";
+unsigned long glb_ThingSpeakChannel = 0;
 
 
 //function declarations
@@ -203,7 +207,7 @@ void Modbus_Process();
 void Modbus_ReadData();
 void Modbus_Client_Send();
 void Modbus_Registers_Create();
-void Modbus_Registers_UpdateOnStart();
+void Modbus_Registers_Setup();
 void OTA_Setup();
 void OTA_Update();
 void StartupPrinting_Setup();
@@ -252,6 +256,7 @@ void FileSystem_SystemDataSave(String);
 void FileSystem_SystemLogCreate();
 void postData();
 void ThingSpeak_Setup();
+void ThermostatMode_Setup();
 
 
 #endif
